@@ -10,11 +10,8 @@ API is required.
 - **Staging API:** `https://gpt-city-api-5950170b319a.herokuapp.com`
 - **API explorer:** `https://gpt-city-api-5950170b319a.herokuapp.com/doc`
 
-In dev, browser requests go through a Vite proxy at `/api/*` so the streaming
-`/chats/:id/message` response works (the staging API currently omits
-`Access-Control-Allow-Origin` on streaming responses — see "Known server-side
-quirks" below). For production, set `VITE_API_BASE_URL` to a host that can
-reach the API without cross-origin issues.
+The browser talks to the staging API directly. Set `VITE_API_BASE_URL` to
+point at a different host (e.g. a local backend).
 
 ## Stack
 
@@ -40,8 +37,6 @@ against a local backend):
 
 ```
 VITE_API_BASE_URL=http://localhost:3000
-# or keep the proxy and just point it elsewhere:
-VITE_API_PROXY_TARGET=http://localhost:3000
 ```
 
 ## Scripts
@@ -69,13 +64,6 @@ VITE_API_PROXY_TARGET=http://localhost:3000
 
 ## Known server-side quirks
 
-- CORS on the streaming endpoint: `GET /health` returns
-  `Access-Control-Allow-Origin: http://localhost:5173`, but
-  `POST /chats/:id/message`'s streaming response does **not** include the same
-  header on the actual response body (only the OPTIONS preflight does). Until
-  the API ships `app.enableCors({ origin: WEB_ORIGIN })` in `src/main.ts`,
-  this repo works around it with a Vite dev proxy; production deploys should
-  fix it server-side or host both front- and back-end on the same origin.
 - Today `chats.service.ts` hard-codes the player's name as `"Denis"` in the
   system prompt. The UI renders the player's chosen name on their own bubbles;
   a follow-up PR against the API can thread `userName` through `SendMessageDto`.

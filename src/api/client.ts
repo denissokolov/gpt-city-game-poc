@@ -9,12 +9,8 @@ export type CreateChatDto = components['schemas']['CreateChatDto']
 
 const STAGING_API = 'https://gpt-city-api-5950170b319a.herokuapp.com'
 
-// In dev we proxy through Vite (see vite.config.ts) because the staging API
-// omits CORS headers on the streaming /chats/:id/message response. In prod,
-// point VITE_API_BASE_URL at a host you control.
 export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-  (import.meta.env.DEV ? '/api' : STAGING_API)
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? STAGING_API
 
 export class ApiError extends Error {
   status: number
