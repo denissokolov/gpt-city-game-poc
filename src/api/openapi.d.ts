@@ -89,17 +89,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/locations/{id}": {
+    "/locations/{id}/state": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get a location by ID with characters and places */
-        get: operations["LocationsController_findOne"];
+        /**
+         * Get location with characters distributed across places
+         * @description This endpoint returns the current state of a location, including its places with characters distributed among them. It is useful for getting a quick overview of the location and its characters.
+         */
+        get: operations["LocationsController_getState"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new user */
+        post: operations["UsersController_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -219,6 +239,11 @@ export interface components {
              */
             placeId: string;
             /**
+             * @description ID of the user who owns the chat
+             * @example c3d4e5f6-a7b8-4012-bdef-123456789012
+             */
+            userId: string;
+            /**
              * @description Summary of the chat conversation
              * @example Discussed the weather and weekend plans.
              */
@@ -230,46 +255,6 @@ export interface components {
              * @example Hello, how are you?
              */
             message: string;
-        };
-        LocationSummaryDto: {
-            /**
-             * @description Unique identifier of the location
-             * @example d4e5f6a7-b8c9-0123-defa-234567890123
-             */
-            id: string;
-            /**
-             * @description Name of the location
-             * @example Downtown District
-             */
-            name: string;
-            /**
-             * @description Description of the location
-             * @example The bustling heart of the city with shops, cafes, and office buildings.
-             */
-            description: string;
-            /**
-             * @description Locale of the location (language + region)
-             * @example en-US
-             * @enum {string}
-             */
-            locale: "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
-        };
-        PlaceDto: {
-            /**
-             * @description Unique identifier of the place
-             * @example c3d4e5f6-a7b8-9012-cdef-123456789012
-             */
-            id: string;
-            /**
-             * @description Name of the place
-             * @example Central Library
-             */
-            name: string;
-            /**
-             * @description Description of the place
-             * @example A quiet library with floor-to-ceiling bookshelves and cozy reading nooks.
-             */
-            description: string;
         };
         LocationDto: {
             /**
@@ -293,10 +278,121 @@ export interface components {
              * @enum {string}
              */
             locale: "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
-            /** @description Characters present at this location */
+        };
+        PlaceStateDto: {
+            /**
+             * @description Unique identifier of the place
+             * @example c3d4e5f6-a7b8-9012-cdef-123456789012
+             */
+            id: string;
+            /**
+             * @description Name of the place
+             * @example Central Library
+             */
+            name: string;
+            /**
+             * @description Description of the place
+             * @example A quiet library with floor-to-ceiling bookshelves and cozy reading nooks.
+             */
+            description: string;
+            /** @description Characters currently present at this place */
             characters: components["schemas"]["CharacterDto"][];
-            /** @description Places within this location */
-            places: components["schemas"]["PlaceDto"][];
+        };
+        LocationStateDto: {
+            /**
+             * @description Unique identifier of the location
+             * @example d4e5f6a7-b8c9-0123-defa-234567890123
+             */
+            id: string;
+            /**
+             * @description Name of the location
+             * @example Downtown District
+             */
+            name: string;
+            /**
+             * @description Description of the location
+             * @example The bustling heart of the city with shops, cafes, and office buildings.
+             */
+            description: string;
+            /**
+             * @description Locale of the location (language + region)
+             * @example en-US
+             * @enum {string}
+             */
+            locale: "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
+            /** @description Places within this location, each with the characters currently present there */
+            places: components["schemas"]["PlaceStateDto"][];
+        };
+        CreateUserDto: {
+            /**
+             * @description First name of the user
+             * @example Ada
+             */
+            firstName: string;
+            /**
+             * @description Last name of the user
+             * @example Lovelace
+             */
+            lastName: string;
+            /**
+             * @description Age of the user in years
+             * @example 36
+             */
+            age: number;
+            /**
+             * @description Sex of the user
+             * @example female
+             * @enum {string}
+             */
+            sex: "male" | "female" | "non_binary";
+            /**
+             * @description Title or role of the user in the city
+             * @example Mathematician
+             */
+            title: string;
+            /**
+             * @description Backstory of the user — where they came from and what shaped them
+             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
+             */
+            backstory: string;
+        };
+        UserDto: {
+            /**
+             * @description Unique identifier of the user
+             * @example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+             */
+            id: string;
+            /**
+             * @description First name of the user
+             * @example Ada
+             */
+            firstName: string;
+            /**
+             * @description Last name of the user
+             * @example Lovelace
+             */
+            lastName: string;
+            /**
+             * @description Age of the user in years
+             * @example 36
+             */
+            age: number;
+            /**
+             * @description Sex of the user
+             * @example female
+             * @enum {string}
+             */
+            sex: "male" | "female" | "non_binary";
+            /**
+             * @description Title or role of the user in the city
+             * @example Mathematician
+             */
+            title: string;
+            /**
+             * @description Backstory of the user — where they came from and what shaped them
+             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
+             */
+            backstory: string;
         };
     };
     responses: never;
@@ -348,7 +444,10 @@ export interface operations {
     ChatsController_create: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -378,7 +477,10 @@ export interface operations {
     ChatsController_sendMessage: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
             path: {
                 id: string;
             };
@@ -421,15 +523,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LocationSummaryDto"][];
+                    "application/json": components["schemas"]["LocationDto"][];
                 };
             };
         };
     };
-    LocationsController_findOne: {
+    LocationsController_getState: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                "x-user-time": string;
+            };
             path: {
                 id: string;
             };
@@ -442,11 +546,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LocationDto"];
+                    "application/json": components["schemas"]["LocationStateDto"];
                 };
             };
             /** @description Location not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            /** @description Invalid request body */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

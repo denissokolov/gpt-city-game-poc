@@ -1,37 +1,88 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useMutation } from '@tanstack/react-query'
 import {
   avatarUrl,
   PLAYER_AVATAR_STYLES,
   type AvatarStyle,
 } from '@/game/avatars'
-import { useGameStore } from '@/game/store'
+import { useGameStore, type PlayerSex } from '@/game/store'
+import { createUser } from '@/api/users'
+import { toastError } from '@/components/Toaster'
 import { cn } from '@/lib/cn'
 
 function randomSeed() {
   return Math.random().toString(36).slice(2, 10)
 }
 
+const SEX_OPTIONS: { value: PlayerSex; label: string }[] = [
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'non_binary', label: 'Non-binary' },
+]
+
+const DEFAULT_TITLE = 'Traveler'
+const DEFAULT_BACKSTORY =
+  'A curious visitor exploring GPT City, eager to meet its inhabitants.'
+
 export default function OnboardingScreen() {
   const navigate = useNavigate()
   const existing = useGameStore((s) => s.player)
   const setPlayer = useGameStore((s) => s.setPlayer)
 
-  const [name, setName] = useState(existing?.name ?? '')
+  const [firstName, setFirstName] = useState(existing?.firstName ?? '')
+  const [lastName, setLastName] = useState(existing?.lastName ?? '')
+  const [age, setAge] = useState<number>(existing?.age ?? 30)
+  const [sex, setSex] = useState<PlayerSex>(existing?.sex ?? 'non_binary')
+  const [title, setTitle] = useState(existing?.title ?? '')
+  const [backstory, setBackstory] = useState(existing?.backstory ?? '')
   const [seed, setSeed] = useState(existing?.avatarSeed ?? randomSeed())
   const [style, setStyle] = useState<AvatarStyle>(
     existing?.avatarStyle ?? 'adventurer',
   )
 
   const preview = useMemo(() => avatarUrl(style, seed, 192), [style, seed])
-  const canContinue = name.trim().length >= 2
+  const canContinue =
+    firstName.trim().length >= 2 &&
+    lastName.trim().length >= 1 &&
+    age > 0 &&
+    title.trim().length >= 2 &&
+    backstory.trim().length >= 10
 
-  function handleSubmit(e: React.FormEvent) {
+  const createUserMutation = useMutation({
+    mutationFn: createUser,
+    onError: (err) => toastError(err),
+  })
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!canContinue) return
-    setPlayer({ name: name.trim(), avatarStyle: style, avatarSeed: seed })
-    navigate('/map')
+    if (!canContinue || createUserMutation.isPending) return
+
+    try {
+      const user = await createUserMutation.mutateAsync({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        age,
+        sex,
+        title: title.trim(),
+        backstory: backstory.trim(),
+      })
+      setPlayer({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        age: user.age,
+        sex: user.sex,
+        title: user.title,
+        backstory: user.backstory,
+        avatarStyle: style,
+        avatarSeed: seed,
+      })
+      navigate('/map')
+    } catch {
+      // toast already shown via onError
+    }
   }
 
   return (
@@ -77,16 +128,98 @@ export default function OnboardingScreen() {
           </div>
 
           <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-sm text-city-muted">First name</span>
+                <input
+                  autoFocus
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Ada"
+                  className="input mt-1"
+                  maxLength={40}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm text-city-muted">Last name</span>
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Lovelace"
+                  className="input mt-1"
+                  maxLength={40}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-[auto,1fr] gap-3 items-end">
+              <label className="block">
+                <span className="text-sm text-city-muted">Age</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={150}
+                  value={age}
+                  onChange={(e) => setAge(Number(e.target.value) || 0)}
+                  className="input mt-1 w-24"
+                />
+              </label>
+              <div>
+                <span className="text-sm text-city-muted">Sex</span>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {SEX_OPTIONS.map((opt) => (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setSex(opt.value)}
+                      className={cn(
+                        'rounded-lg border px-3 py-1.5 text-sm transition-colors',
+                        sex === opt.value
+                          ? 'border-city-accent bg-city-accent/10 text-city-accent'
+                          : 'border-white/10 text-city-muted hover:border-white/25',
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <label className="block">
-              <span className="text-sm text-city-muted">Your name</span>
+              <span className="text-sm text-city-muted">
+                Title{' '}
+                <span className="text-city-muted/70">
+                  (how the city knows you)
+                </span>
+              </span>
               <input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Ada"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={DEFAULT_TITLE}
                 className="input mt-1"
-                maxLength={40}
+                maxLength={80}
               />
+            </label>
+
+            <label className="block">
+              <span className="text-sm text-city-muted">
+                Backstory{' '}
+                <span className="text-city-muted/70">
+                  (where you came from, what shaped you)
+                </span>
+              </span>
+              <textarea
+                value={backstory}
+                onChange={(e) => setBackstory(e.target.value)}
+                placeholder={DEFAULT_BACKSTORY}
+                rows={3}
+                className="input mt-1 resize-y min-h-[84px]"
+                maxLength={600}
+              />
+              <span className="mt-1 block text-xs text-city-muted/70">
+                {backstory.trim().length}/600
+              </span>
             </label>
 
             <div>
@@ -122,9 +255,11 @@ export default function OnboardingScreen() {
           <button
             type="submit"
             className="btn-primary"
-            disabled={!canContinue}
+            disabled={!canContinue || createUserMutation.isPending}
           >
-            Enter the city →
+            {createUserMutation.isPending
+              ? 'Creating…'
+              : 'Enter the city →'}
           </button>
         </div>
       </motion.form>

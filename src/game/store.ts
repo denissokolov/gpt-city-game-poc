@@ -2,8 +2,16 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { AvatarStyle } from './avatars'
 
+export type PlayerSex = 'male' | 'female' | 'non_binary'
+
 export type PlayerProfile = {
-  name: string
+  id: string
+  firstName: string
+  lastName: string
+  age: number
+  sex: PlayerSex
+  title: string
+  backstory: string
   avatarStyle: AvatarStyle
   avatarSeed: string
 }
@@ -55,7 +63,20 @@ export const useGameStore = create<GameState>()(
     {
       name: 'gpt-city-game',
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      // v2 introduces the backend `userId` and first/last name split; older
+      // profiles don't carry an id so we reset them and send the user through
+      // onboarding again.
+      version: 2,
+      migrate: (state, fromVersion) => {
+        if (fromVersion < 2) {
+          return {
+            player: null,
+            currentLocationId: null,
+            chatIdByNpcPlace: {},
+          } as GameState
+        }
+        return state as GameState
+      },
     },
   ),
 )

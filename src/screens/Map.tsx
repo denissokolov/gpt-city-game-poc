@@ -73,7 +73,9 @@ export default function MapScreen() {
           />
           <div>
             <p className="text-xs text-city-muted">Playing as</p>
-            <p className="font-display font-semibold">{player.name}</p>
+            <p className="font-display font-semibold">
+              {player.firstName} {player.lastName}
+            </p>
           </div>
         </div>
         <button
@@ -176,7 +178,7 @@ export default function MapScreen() {
                 <div className="relative">
                   <motion.img
                     src={avatarUrl(player.avatarStyle, player.avatarSeed, 96)}
-                    alt={player.name}
+                    alt={`${player.firstName} ${player.lastName}`}
                     className="h-14 w-14 rounded-full border-2 border-white shadow-xl bg-white/10"
                     animate={
                       walkingTo

@@ -1,11 +1,14 @@
 import type { components } from './openapi'
 
 export type CharacterDto = components['schemas']['CharacterDto']
-export type LocationSummaryDto = components['schemas']['LocationSummaryDto']
 export type LocationDto = components['schemas']['LocationDto']
-export type PlaceDto = components['schemas']['PlaceDto']
+export type LocationStateDto = components['schemas']['LocationStateDto']
+export type PlaceStateDto = components['schemas']['PlaceStateDto']
 export type ChatDto = components['schemas']['ChatDto']
 export type CreateChatDto = components['schemas']['CreateChatDto']
+export type SendMessageDto = components['schemas']['SendMessageDto']
+export type CreateUserDto = components['schemas']['CreateUserDto']
+export type UserDto = components['schemas']['UserDto']
 
 const STAGING_API = 'https://gpt-city-api-5950170b319a.herokuapp.com'
 

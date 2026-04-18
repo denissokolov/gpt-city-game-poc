@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useLocation } from '@/api/locations'
+import { useLocationState } from '@/api/locations'
 import { useCharacters } from '@/api/characters'
 import { API_BASE_URL } from '@/api/client'
 import { useGameStore } from '@/game/store'
@@ -31,33 +31,36 @@ export default function ChatScreen() {
   const currentLocationId = useGameStore((s) => s.currentLocationId)
   const forgetChatId = useGameStore((s) => s.forgetChatId)
 
-  const { data: location } = useLocation(currentLocationId ?? undefined)
+  const { data: location } = useLocationState(currentLocationId ?? undefined)
   const { data: allCharacters } = useCharacters()
-
-  const character = useMemo(() => {
-    if (!characterId) return undefined
-    return (
-      location?.characters.find((c) => c.id === characterId) ??
-      allCharacters?.find((c) => c.id === characterId)
-    )
-  }, [characterId, location, allCharacters])
 
   const place = useMemo(() => {
     if (!placeId || !location) return undefined
     return location.places.find((p) => p.id === placeId)
   }, [placeId, location])
 
+  const character = useMemo(() => {
+    if (!characterId) return undefined
+    const fromPlace = location?.places
+      .flatMap((p) => p.characters)
+      .find((c) => c.id === characterId)
+    return fromPlace ?? allCharacters?.find((c) => c.id === characterId)
+  }, [characterId, location, allCharacters])
+
+  const userId = player?.id
+
   const transport = useMemo(() => {
-    if (!chatId) return undefined
+    if (!chatId || !userId) return undefined
     return new DefaultChatTransport<UIMessage>({
       api: `${API_BASE_URL}/chats/${encodeURIComponent(chatId)}/message`,
+      headers: { 'x-user-id': userId },
       prepareSendMessagesRequest: ({ messages }) => {
         const last = messages[messages.length - 1]
         const message = last ? partsToText(last) : ''
         return { body: { message } }
       },
     })
-  }, [chatId])
+  }, [chatId, userId])
 
   const { messages, sendMessage, status, error } = useChat({
     id: chatId,

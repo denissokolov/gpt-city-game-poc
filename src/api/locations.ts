@@ -2,15 +2,18 @@ import { useQuery } from '@tanstack/react-query'
 import {
   apiFetch,
   type LocationDto,
-  type LocationSummaryDto,
+  type LocationStateDto,
 } from './client'
 
 export function fetchLocations() {
-  return apiFetch<LocationSummaryDto[]>('/locations')
+  return apiFetch<LocationDto[]>('/locations')
 }
 
-export function fetchLocation(id: string) {
-  return apiFetch<LocationDto>(`/locations/${encodeURIComponent(id)}`)
+export function fetchLocationState(id: string, userTime: string) {
+  return apiFetch<LocationStateDto>(
+    `/locations/${encodeURIComponent(id)}/state`,
+    { headers: { 'x-user-time': userTime } },
+  )
 }
 
 export function useLocations() {
@@ -20,10 +23,10 @@ export function useLocations() {
   })
 }
 
-export function useLocation(id: string | undefined) {
+export function useLocationState(id: string | undefined) {
   return useQuery({
-    queryKey: ['location', id],
+    queryKey: ['location-state', id],
     enabled: Boolean(id),
-    queryFn: () => fetchLocation(id as string),
+    queryFn: () => fetchLocationState(id as string, new Date().toISOString()),
   })
 }
