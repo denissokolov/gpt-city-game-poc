@@ -67,14 +67,19 @@ export default function ChatScreen() {
 
   const [input, setInput] = useState('')
   const scrollerRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!scrollerRef.current) return
-    scrollerRef.current.scrollTo({
-      top: scrollerRef.current.scrollHeight,
-      behavior: 'smooth',
+    const scroller = scrollerRef.current
+    const content = contentRef.current
+    if (!scroller || !content) return
+
+    const observer = new ResizeObserver(() => {
+      scroller.scrollTop = scroller.scrollHeight
     })
-  }, [messages, status])
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -95,7 +100,7 @@ export default function ChatScreen() {
   const isStreaming = status === 'streaming' || status === 'submitted'
 
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className="h-dvh flex flex-col">
       <header className="sticky top-0 z-10 border-b border-white/5 bg-city-bg/80 backdrop-blur-md">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
@@ -147,7 +152,10 @@ export default function ChatScreen() {
         ref={scrollerRef}
         className="flex-1 overflow-y-auto"
       >
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-4">
+        <div
+          ref={contentRef}
+          className="mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-4"
+        >
           {messages.length === 0 && !isStreaming && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -167,7 +175,6 @@ export default function ChatScreen() {
               return (
                 <motion.div
                   key={m.id}
-                  layout
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
