@@ -62,10 +62,33 @@ export default function ChatScreen() {
     })
   }, [chatId, userId])
 
+  // A chat id can go stale within a session if the backend drops or rotates
+  // it (e.g. staging DB reset). In that case the send fails with 403/404;
+  // forget the id so the next tap creates a fresh chat.
+  function isStaleChatError(err: unknown): boolean {
+    const msg = err instanceof Error ? err.message : String(err)
+    return (
+      /\b(403|404)\b/.test(msg) ||
+      /not the owner/i.test(msg) ||
+      /forbidden/i.test(msg) ||
+      /not ?found/i.test(msg)
+    )
+  }
+
   const { messages, sendMessage, status, error } = useChat({
     id: chatId,
     transport,
-    onError: (err) => toastError(err),
+    onError: (err) => {
+      if (isStaleChatError(err) && placeId && characterId) {
+        forgetChatId(placeId, characterId)
+        toastError(
+          'This conversation is no longer available. Starting a fresh one…',
+        )
+        navigate(`/location/${currentLocationId ?? ''}`, { replace: true })
+        return
+      }
+      toastError(err)
+    },
   })
 
   const [input, setInput] = useState('')

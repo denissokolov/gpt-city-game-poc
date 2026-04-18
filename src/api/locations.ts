@@ -4,6 +4,7 @@ import {
   type LocationDto,
   type LocationStateDto,
 } from './client'
+import { useGameStore } from '@/game/store'
 
 export function fetchLocations() {
   return apiFetch<LocationDto[]>('/locations')
@@ -24,9 +25,17 @@ export function useLocations() {
 }
 
 export function useLocationState(id: string | undefined) {
+  const timeOverride = useGameStore((s) => s.timeOverride)
+  // Key by the override so flipping the time changer triggers a refetch.
+  // When there's no override we use 'live' as the key and resolve the real
+  // clock inside `queryFn` (otherwise we'd change the key on every render).
   return useQuery({
-    queryKey: ['location-state', id],
+    queryKey: ['location-state', id, timeOverride ?? 'live'],
     enabled: Boolean(id),
-    queryFn: () => fetchLocationState(id as string, new Date().toISOString()),
+    queryFn: () =>
+      fetchLocationState(
+        id as string,
+        timeOverride ?? new Date().toISOString(),
+      ),
   })
 }

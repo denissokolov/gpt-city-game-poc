@@ -6,7 +6,8 @@ import { useLocationState } from '@/api/locations'
 import { createChat } from '@/api/chats'
 import { useGameStore } from '@/game/store'
 import { NpcCard } from '@/components/NpcCard'
-import { Skeleton } from '@/components/Skeleton'
+import { LocationLoading } from '@/components/LocationLoading'
+import { TimeChanger } from '@/components/TimeChanger'
 import { toastError } from '@/components/Toaster'
 import type { CharacterDto, PlaceStateDto } from '@/api/client'
 
@@ -65,14 +66,10 @@ export default function LocationScreen() {
         </button>
       </header>
 
-      <section className="mx-auto max-w-6xl">
-        {isLoading && (
-          <div className="space-y-6">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-48" />
-            <Skeleton className="h-48" />
-          </div>
-        )}
+      <section className="mx-auto max-w-6xl space-y-6">
+        <TimeChanger />
+
+        {isLoading && <LocationLoading />}
 
         {location && (
           <motion.div
