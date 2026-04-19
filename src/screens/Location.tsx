@@ -64,8 +64,13 @@ export default function LocationScreen() {
   return (
     <div className="min-h-dvh p-4 sm:p-8">
       <header className="mx-auto max-w-6xl mb-6 flex items-center gap-3">
-        <button className="btn-ghost" onClick={() => navigate('/map')}>
-          {t.common.backToMap}
+        <button
+          className="btn-ghost"
+          aria-label={t.common.backToMap}
+          onClick={() => navigate('/map')}
+        >
+          <span aria-hidden="true">←</span>
+          <span className="hidden sm:inline sm:ml-1">{t.common.backToMap}</span>
         </button>
         <LanguageSwitcher className="ml-auto" />
       </header>

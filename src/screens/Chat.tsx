@@ -10,7 +10,6 @@ import { useGameStore } from "@/game/store";
 import { avatarUrl, npcAvatarUrl } from "@/game/avatars";
 import { toastError } from "@/components/Toaster";
 import StreamingText from "@/components/StreamingText";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
 
@@ -115,7 +114,7 @@ export default function ChatScreen() {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+    el.style.height = `${el.scrollHeight + 2}px`;
   }, [input]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -142,13 +141,15 @@ export default function ChatScreen() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             className="btn-ghost shrink-0"
+            aria-label={t.common.back}
             onClick={() =>
               navigate(
                 currentLocationId ? `/location/${currentLocationId}` : "/map",
               )
             }
           >
-            {t.common.back}
+            <span aria-hidden="true">←</span>
+            <span className="hidden sm:inline sm:ml-1">{t.common.back}</span>
           </button>
           {character && (
             <div className="flex items-center gap-3 min-w-0">
@@ -174,7 +175,6 @@ export default function ChatScreen() {
                 {t.chat.typing}
               </span>
             )}
-            <LanguageSwitcher />
             <button
               className="btn-ghost text-xs"
               onClick={handleReset}
@@ -279,15 +279,30 @@ export default function ChatScreen() {
             }}
             rows={1}
             placeholder={t.chat.messagePlaceholder(character?.firstName)}
-            className="input resize-none overflow-y-auto max-h-40 leading-relaxed py-3"
+            className="input resize-none overflow-y-auto max-h-40 leading-relaxed py-2"
             disabled={!chatId}
           />
           <button
             type="submit"
-            className="btn-primary"
+            className="btn-primary py-3"
             disabled={!input.trim() || isStreaming}
+            aria-label={t.common.send}
           >
-            {t.common.send}
+            <svg
+              className="h-5 w-5 sm:hidden"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              style={{ position: "relative", top: "1px", left: "-1px" }}
+            >
+              <path d="M22 2 11 13" />
+              <path d="M22 2 15 22l-4-9-9-4Z" />
+            </svg>
+            <span className="hidden sm:inline">{t.common.send}</span>
           </button>
         </div>
       </form>

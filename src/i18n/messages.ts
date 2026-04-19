@@ -88,8 +88,8 @@ const en: Messages = {
     short: { "en-US": "EN", ru: "RU" },
   },
   common: {
-    back: "← Back",
-    backToMap: "← Back to map",
+    back: "Back",
+    backToMap: "Back to map",
     changeAvatar: "Change avatar",
     reset: "Reset",
     shuffle: "Shuffle",
@@ -200,8 +200,8 @@ const ru: Messages = {
     short: { "en-US": "EN", ru: "RU" },
   },
   common: {
-    back: "← Назад",
-    backToMap: "← К карте",
+    back: "Назад",
+    backToMap: "К карте",
     changeAvatar: "Сменить аватар",
     reset: "Сброс",
     shuffle: "Перемешать",
