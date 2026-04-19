@@ -9,6 +9,7 @@ import { API_BASE_URL } from '@/api/client'
 import { useGameStore } from '@/game/store'
 import { avatarUrl, npcAvatarUrl } from '@/game/avatars'
 import { toastError } from '@/components/Toaster'
+import StreamingText from '@/components/StreamingText'
 import { cn } from '@/lib/cn'
 
 function partsToText(msg: UIMessage): string {
@@ -94,6 +95,7 @@ export default function ChatScreen() {
   const [input, setInput] = useState('')
   const scrollerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     const scroller = scrollerRef.current
@@ -106,6 +108,13 @@ export default function ChatScreen() {
     observer.observe(content)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [input])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -195,16 +204,18 @@ export default function ChatScreen() {
           )}
 
           <AnimatePresence initial={false}>
-            {messages.map((m) => {
+            {messages.map((m, i) => {
               const text = partsToText(m)
               const isUser = m.role === 'user'
+              const isLast = i === messages.length - 1
+              const isStreamingThis = !isUser && isLast && isStreaming
               return (
                 <motion.div
                   key={m.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    'flex items-end gap-2',
+                    'flex items-start gap-2',
                     isUser ? 'justify-end' : 'justify-start',
                   )}
                 >
@@ -219,11 +230,15 @@ export default function ChatScreen() {
                     className={cn(
                       'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap break-words',
                       isUser
-                        ? 'bg-city-accent text-slate-900 rounded-br-sm'
-                        : 'bg-white/[0.06] border border-white/10 text-city-ink rounded-bl-sm',
+                        ? 'bg-city-accent text-slate-900 rounded-tr-sm'
+                        : 'bg-white/[0.06] border border-white/10 text-city-ink rounded-tl-sm',
                     )}
                   >
-                    {text || (
+                    {isUser ? (
+                      text
+                    ) : text ? (
+                      <StreamingText text={text} streaming={isStreamingThis} />
+                    ) : (
                       <span className="opacity-60 italic">…</span>
                     )}
                   </div>
@@ -253,6 +268,7 @@ export default function ChatScreen() {
       >
         <div className="mx-auto max-w-3xl px-4 sm:px-6 py-3 flex items-end gap-2">
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -261,11 +277,11 @@ export default function ChatScreen() {
                 handleSubmit(e)
               }
             }}
-            rows={1}
+            rows={2}
             placeholder={
               character ? `Message ${character.firstName}…` : 'Type a message…'
             }
-            className="input resize-none max-h-40"
+            className="input resize-none overflow-y-auto max-h-40 leading-relaxed py-3"
             disabled={!chatId}
           />
           <button
