@@ -23,6 +23,20 @@ function partsToText(msg: UIMessage): string {
     .join("");
 }
 
+function TypingDots({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 py-1"
+      role="status"
+      aria-label={label}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-city-muted animate-bounce [animation-delay:-0.3s]" />
+      <span className="h-1.5 w-1.5 rounded-full bg-city-muted animate-bounce [animation-delay:-0.15s]" />
+      <span className="h-1.5 w-1.5 rounded-full bg-city-muted animate-bounce" />
+    </span>
+  );
+}
+
 export default function ChatScreen() {
   const t = useT();
   const navigate = useNavigate();
@@ -170,11 +184,6 @@ export default function ChatScreen() {
             </div>
           )}
           <div className="ml-auto flex items-center gap-2">
-            {isStreaming && (
-              <span className="text-xs text-city-accent animate-pulse">
-                {t.chat.typing}
-              </span>
-            )}
             <button
               className="btn-ghost text-xs"
               onClick={handleReset}
@@ -239,7 +248,7 @@ export default function ChatScreen() {
                     ) : text ? (
                       <StreamingText text={text} streaming={isStreamingThis} />
                     ) : (
-                      <span className="opacity-60 italic">…</span>
+                      <TypingDots label={t.chat.typing} />
                     )}
                   </div>
                   {isUser && (
@@ -252,6 +261,27 @@ export default function ChatScreen() {
                 </motion.div>
               );
             })}
+            {isStreaming &&
+              (messages.length === 0 ||
+                messages[messages.length - 1].role === "user") && (
+                <motion.div
+                  key="__typing__"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-2 justify-start"
+                >
+                  {character && (
+                    <img
+                      src={npcAvatarUrl(character)}
+                      alt=""
+                      className="h-8 w-8 rounded-full border border-white/10 shrink-0"
+                    />
+                  )}
+                  <div className="max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm bg-white/[0.06] border border-white/10 text-city-ink">
+                    <TypingDots label={t.chat.typing} />
+                  </div>
+                </motion.div>
+              )}
           </AnimatePresence>
 
           {error && (
