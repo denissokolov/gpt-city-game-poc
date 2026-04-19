@@ -28,7 +28,7 @@ export function getLocationPosition(id: string, index: number, total: number): M
   const x = (col + 0.5) / cols + jitterX
   const y = (row + 0.5) / rows + jitterY
   return {
-    x: Math.min(0.92, Math.max(0.08, x)),
-    y: Math.min(0.9, Math.max(0.1, y)),
+    x: Math.min(0.85, Math.max(0.15, x)),
+    y: Math.min(0.88, Math.max(0.12, y)),
   }
 }

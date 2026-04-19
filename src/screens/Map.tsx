@@ -66,17 +66,17 @@ export default function MapScreen() {
   if (!player) return null
 
   return (
-    <div className="min-h-dvh p-4 sm:p-8">
-      <header className="mx-auto max-w-5xl mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div className="min-h-dvh p-3 sm:p-8">
+      <header className="mx-auto max-w-5xl mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <img
             src={avatarUrl(player.avatarStyle, player.avatarSeed, 64)}
             alt=""
-            className="h-10 w-10 rounded-full border border-white/10"
+            className="h-10 w-10 shrink-0 rounded-full border border-white/10"
           />
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-city-muted">{t.map.playingAs}</p>
-            <p className="font-display font-semibold">
+            <p className="font-display font-semibold truncate">
               {player.firstName} {player.lastName}
             </p>
           </div>
@@ -96,9 +96,9 @@ export default function MapScreen() {
         <h1 className="font-display text-2xl sm:text-3xl font-bold mb-1">
           {t.map.heading}
         </h1>
-        <p className="text-city-muted text-sm mb-4">{t.map.description}</p>
+        <p className="text-city-muted text-sm mb-3 sm:mb-4">{t.map.description}</p>
 
-        <div className="relative card overflow-hidden aspect-[16/10] min-h-[360px]">
+        <div className="relative card overflow-hidden aspect-[4/5] min-h-[420px] sm:aspect-[16/10] sm:min-h-[360px]">
           <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:32px_32px]" />
           <svg className="absolute inset-0 h-full w-full" aria-hidden>
             {locations && locations.length > 1 &&
@@ -122,9 +122,9 @@ export default function MapScreen() {
           </svg>
 
           {isLoading && (
-            <div className="absolute inset-0 grid grid-cols-3 gap-6 p-8">
+            <div className="absolute inset-0 grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 sm:gap-6 sm:p-8">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 w-full" />
+                <Skeleton key={i} className="h-16 w-full sm:h-20" />
               ))}
             </div>
           )}
@@ -139,7 +139,7 @@ export default function MapScreen() {
                 onClick={() => handleClickNode(loc.id)}
                 disabled={Boolean(walkingTo)}
                 className={cn(
-                  'absolute -translate-x-1/2 -translate-y-1/2 px-3 py-2 rounded-xl text-sm font-semibold border backdrop-blur-md transition-colors text-left max-w-[180px]',
+                  'absolute -translate-x-1/2 -translate-y-1/2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border backdrop-blur-md transition-colors text-left max-w-[120px] sm:max-w-[180px]',
                   isCurrent
                     ? 'bg-city-accent text-slate-900 border-city-accent shadow-[0_0_40px_-8px_rgba(245,177,76,0.9)]'
                     : 'bg-city-panel/80 border-white/10 hover:border-city-accent/60 hover:text-city-accent',
@@ -152,7 +152,7 @@ export default function MapScreen() {
                 whileTap={{ scale: 0.96 }}
               >
                 <span className="block truncate">{loc.name}</span>
-                <span className="block text-[10px] uppercase tracking-wider opacity-70">
+                <span className="block text-[9px] sm:text-[10px] uppercase tracking-wider opacity-70">
                   {loc.locale}
                 </span>
               </motion.button>
@@ -182,7 +182,7 @@ export default function MapScreen() {
                   <motion.img
                     src={avatarUrl(player.avatarStyle, player.avatarSeed, 96)}
                     alt={`${player.firstName} ${player.lastName}`}
-                    className="h-14 w-14 rounded-full border-2 border-white shadow-xl bg-white/10"
+                    className="h-10 w-10 sm:h-14 sm:w-14 rounded-full border-2 border-white shadow-xl bg-white/10"
                     animate={
                       walkingTo
                         ? { y: [0, -4, 0, -4, 0] }

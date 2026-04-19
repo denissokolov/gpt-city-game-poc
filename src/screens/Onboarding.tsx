@@ -129,6 +129,35 @@ export default function OnboardingScreen() {
           </div>
 
           <div className="flex flex-col gap-4">
+            <div>
+              <span className="text-sm text-city-muted">
+                {t.onboarding.avatarStyle}
+              </span>
+              <div className="mt-2 grid grid-cols-5 sm:grid-cols-5 gap-2">
+                {PLAYER_AVATAR_STYLES.map((s) => (
+                  <button
+                    type="button"
+                    key={s}
+                    onClick={() => setStyle(s)}
+                    aria-label={s}
+                    className={cn(
+                      'aspect-square rounded-xl border overflow-hidden transition-all bg-white/5',
+                      s === style
+                        ? 'border-city-accent ring-2 ring-city-accent/50'
+                        : 'border-white/10 hover:border-white/25',
+                    )}
+                  >
+                    <img
+                      src={avatarUrl(s, seed, 96)}
+                      alt=""
+                      className="h-full w-full"
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-sm text-city-muted">
@@ -230,35 +259,6 @@ export default function OnboardingScreen() {
                 {backstory.trim().length}/600
               </span>
             </label>
-
-            <div>
-              <span className="text-sm text-city-muted">
-                {t.onboarding.avatarStyle}
-              </span>
-              <div className="mt-2 grid grid-cols-5 sm:grid-cols-5 gap-2">
-                {PLAYER_AVATAR_STYLES.map((s) => (
-                  <button
-                    type="button"
-                    key={s}
-                    onClick={() => setStyle(s)}
-                    aria-label={s}
-                    className={cn(
-                      'aspect-square rounded-xl border overflow-hidden transition-all bg-white/5',
-                      s === style
-                        ? 'border-city-accent ring-2 ring-city-accent/50'
-                        : 'border-white/10 hover:border-white/25',
-                    )}
-                  >
-                    <img
-                      src={avatarUrl(s, seed, 96)}
-                      alt=""
-                      className="h-full w-full"
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
