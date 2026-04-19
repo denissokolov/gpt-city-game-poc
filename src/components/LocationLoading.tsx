@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useT } from "@/i18n";
 import { cn } from "@/lib/cn";
-
-const STATUS_MESSAGES = [
-  "Tuning into the city frequency…",
-  "Checking who stepped out for coffee…",
-  "Asking the locals where everyone is…",
-  "Lining up the NPCs by time of day…",
-  "Polishing the scene for your arrival…",
-];
 
 function Shimmer({ className }: { className?: string }) {
   return (
@@ -38,6 +31,8 @@ export function LocationLoading({
 }: {
   estimatedMs?: number;
 }) {
+  const t = useT();
+  const statuses = t.loading.statuses;
   const [progress, setProgress] = useState(0);
   const [statusIdx, setStatusIdx] = useState(0);
 
@@ -47,22 +42,22 @@ export function LocationLoading({
       const elapsed = now - started;
       // Ease-out: 1 - (1 - t)^2, capped at 95% so the bar never claims done
       // before the query actually resolves.
-      const t = Math.min(elapsed / estimatedMs, 1);
-      const eased = 1 - Math.pow(1 - t, 2);
+      const tNorm = Math.min(elapsed / estimatedMs, 1);
+      const eased = 1 - Math.pow(1 - tNorm, 2);
       setProgress(Math.min(eased * 0.95, 0.95));
-      if (t < 1) requestAnimationFrame(tick);
+      if (tNorm < 1) requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(id);
   }, [estimatedMs]);
 
   useEffect(() => {
-    const interval = Math.max(1800, estimatedMs / STATUS_MESSAGES.length);
+    const interval = Math.max(1800, estimatedMs / statuses.length);
     const id = setInterval(
-      () => setStatusIdx((i) => (i + 1) % STATUS_MESSAGES.length),
+      () => setStatusIdx((i) => (i + 1) % statuses.length),
       interval,
     );
     return () => clearInterval(id);
-  }, [estimatedMs]);
+  }, [estimatedMs, statuses.length]);
 
   return (
     <div className="space-y-5">
@@ -92,7 +87,7 @@ export function LocationLoading({
 
           <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-[0.2em] text-city-accent">
-              Loading the scene
+              {t.loading.heading}
             </p>
             <div className="relative mt-1 h-6 overflow-hidden">
               <AnimatePresence mode="wait">
@@ -104,7 +99,7 @@ export function LocationLoading({
                   transition={{ duration: 0.35 }}
                   className="font-display text-base sm:text-lg font-semibold truncate"
                 >
-                  {STATUS_MESSAGES[statusIdx]}
+                  {statuses[statusIdx]}
                 </motion.p>
               </AnimatePresence>
             </div>

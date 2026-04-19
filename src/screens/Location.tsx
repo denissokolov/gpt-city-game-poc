@@ -9,9 +9,12 @@ import { NpcCard } from '@/components/NpcCard'
 import { LocationLoading } from '@/components/LocationLoading'
 import { TimeChanger } from '@/components/TimeChanger'
 import { toastError } from '@/components/Toaster'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useT } from '@/i18n'
 import type { CharacterDto, PlaceStateDto } from '@/api/client'
 
 export default function LocationScreen() {
+  const t = useT()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const player = useGameStore((s) => s.player)
@@ -62,8 +65,9 @@ export default function LocationScreen() {
     <div className="min-h-dvh p-4 sm:p-8">
       <header className="mx-auto max-w-6xl mb-6 flex items-center gap-3">
         <button className="btn-ghost" onClick={() => navigate('/map')}>
-          ← Back to map
+          {t.common.backToMap}
         </button>
+        <LanguageSwitcher className="ml-auto" />
       </header>
 
       <section className="mx-auto max-w-6xl space-y-6">
@@ -80,7 +84,7 @@ export default function LocationScreen() {
           >
             <div className="card p-5 sm:p-6">
               <p className="text-xs uppercase tracking-[0.2em] text-city-accent">
-                Location · {location.locale}
+                {t.location.label} · {location.locale}
               </p>
               <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold">
                 {location.name}
@@ -89,15 +93,16 @@ export default function LocationScreen() {
                 {location.description}
               </p>
               <p className="mt-3 text-xs text-city-muted">
-                {location.places.length} place
-                {location.places.length === 1 ? '' : 's'} · {totalCharacters}{' '}
-                {totalCharacters === 1 ? 'person' : 'people'} around right now
+                {t.location.countsSummary({
+                  places: location.places.length,
+                  people: totalCharacters,
+                })}
               </p>
             </div>
 
             {location.places.length === 0 && (
               <div className="card p-6 text-city-muted text-sm">
-                No notable spots here yet.
+                {t.location.noPlaces}
               </div>
             )}
 
@@ -114,7 +119,7 @@ export default function LocationScreen() {
 
                 {place.characters.length === 0 ? (
                   <p className="text-sm text-city-muted">
-                    Nobody is here right now.
+                    {t.location.nobodyHere}
                   </p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">

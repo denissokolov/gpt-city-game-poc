@@ -4,6 +4,12 @@ import type { AvatarStyle } from './avatars'
 
 export type PlayerSex = 'male' | 'female' | 'non_binary'
 
+export type UiLanguage = 'en-US' | 'ru'
+
+export const UI_LANGUAGES: UiLanguage[] = ['en-US', 'ru']
+
+export const DEFAULT_UI_LANGUAGE: UiLanguage = 'en-US'
+
 export type PlayerProfile = {
   id: string
   firstName: string
@@ -32,6 +38,8 @@ type GameState = {
   // Session-only: lets the player pretend it's a different time of day when
   // asking the server for a location state. `null` means "use real wall clock".
   timeOverride: string | null
+  // Preferred UI language. Persisted across sessions.
+  uiLanguage: UiLanguage
   setPlayer: (player: PlayerProfile) => void
   clearPlayer: () => void
   setCurrentLocation: (id: string | null) => void
@@ -39,6 +47,20 @@ type GameState = {
   rememberChatId: (placeId: string, characterId: string, chatId: string) => void
   forgetChatId: (placeId: string, characterId: string) => void
   setTimeOverride: (iso: string | null) => void
+  setUiLanguage: (language: UiLanguage) => void
+}
+
+function detectDefaultLanguage(): UiLanguage {
+  if (typeof navigator === 'undefined') return DEFAULT_UI_LANGUAGE
+  const langs = navigator.languages?.length
+    ? navigator.languages
+    : [navigator.language]
+  for (const l of langs) {
+    const lower = l.toLowerCase()
+    if (lower.startsWith('ru')) return 'ru'
+    if (lower.startsWith('en')) return 'en-US'
+  }
+  return DEFAULT_UI_LANGUAGE
 }
 
 export const useGameStore = create<GameState>()(
@@ -48,14 +70,18 @@ export const useGameStore = create<GameState>()(
       currentLocationId: null,
       chatIdByNpcPlace: {},
       timeOverride: null,
+      uiLanguage: detectDefaultLanguage(),
       setPlayer: (player) => set({ player }),
       clearPlayer: () =>
-        set({
+        set((s) => ({
           player: null,
           currentLocationId: null,
           chatIdByNpcPlace: {},
           timeOverride: null,
-        }),
+          // Preserve the UI language across logout — it's a preference,
+          // not profile data.
+          uiLanguage: s.uiLanguage,
+        })),
       setCurrentLocation: (id) => set({ currentLocationId: id }),
       getChatId: (placeId, characterId) =>
         get().chatIdByNpcPlace[chatKey(placeId, characterId)],
@@ -73,17 +99,18 @@ export const useGameStore = create<GameState>()(
           return { chatIdByNpcPlace: copy }
         }),
       setTimeOverride: (iso) => set({ timeOverride: iso }),
+      setUiLanguage: (language) => set({ uiLanguage: language }),
     }),
     {
       name: 'gpt-city-game',
       storage: createJSONStorage(() => localStorage),
-      // v3 stops persisting `chatIdByNpcPlace` — chat ids are now
-      // session-only, so a page reload always starts fresh conversations
-      // and we can't resurrect chats owned by a previous backend user.
-      version: 3,
+      // v4 adds `uiLanguage` — the player's preferred UI language, used by
+      // the i18n layer. It's persisted so the choice survives reloads.
+      version: 4,
       partialize: (state) => ({
         player: state.player,
         currentLocationId: state.currentLocationId,
+        uiLanguage: state.uiLanguage,
       }),
       migrate: (state, fromVersion) => {
         if (fromVersion < 2) {
@@ -92,17 +119,24 @@ export const useGameStore = create<GameState>()(
             currentLocationId: null,
             chatIdByNpcPlace: {},
             timeOverride: null,
+            uiLanguage: detectDefaultLanguage(),
           } as GameState
         }
-        if (fromVersion < 3) {
-          const s = state as Partial<GameState> & {
-            chatIdByNpcPlace?: unknown
-          }
+        const s = state as Partial<GameState> & {
+          chatIdByNpcPlace?: unknown
+          chatLanguage?: unknown
+          uiLanguage?: unknown
+        }
+        if (fromVersion < 4) {
           return {
             player: s.player ?? null,
             currentLocationId: s.currentLocationId ?? null,
             chatIdByNpcPlace: {},
             timeOverride: null,
+            uiLanguage:
+              (s.uiLanguage as UiLanguage | undefined) ??
+              (s.chatLanguage as UiLanguage | undefined) ??
+              detectDefaultLanguage(),
           } as GameState
         }
         return state as GameState

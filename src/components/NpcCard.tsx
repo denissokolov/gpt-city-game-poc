@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import type { CharacterDto } from '@/api/client'
+import type { PlayerSex } from '@/game/store'
 import { npcAvatarUrl } from '@/game/avatars'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
 type Props = {
@@ -10,6 +12,7 @@ type Props = {
 }
 
 export function NpcCard({ character, onClick, compact }: Props) {
+  const t = useT()
   return (
     <motion.button
       whileHover={{ y: -2 }}
@@ -32,7 +35,7 @@ export function NpcCard({ character, onClick, compact }: Props) {
             {character.firstName} {character.lastName}
           </h3>
           <span className="text-xs text-city-muted shrink-0">
-            {character.age} · {character.sex.replace('_', '-')}
+            {character.age} · {t.sex[character.sex as PlayerSex]}
           </span>
         </div>
         <p className="text-sm text-city-accent/90">{character.title}</p>

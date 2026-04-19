@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect } from 'react'
+import { getMessages } from '@/i18n'
 
 type Toast = {
   id: string
@@ -30,8 +31,9 @@ export function toast(message: string, kind: Toast['kind'] = 'info') {
 }
 
 export function toastError(err: unknown) {
+  const fallback = getMessages().common.somethingWentWrong
   const msg =
-    err instanceof Error ? err.message : typeof err === 'string' ? err : 'Something went wrong'
+    err instanceof Error ? err.message : typeof err === 'string' ? err : fallback
   return toast(msg, 'error')
 }
 

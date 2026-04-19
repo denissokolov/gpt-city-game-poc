@@ -1,0 +1,81 @@
+---
+description: Use the i18n layer for all user-facing strings in .tsx files
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# i18n in TSX files
+
+All user-facing text rendered from a `.tsx` file must come from the i18n
+layer in `src/i18n/`. The app ships with `en-US` and `ru` dictionaries in
+`src/i18n/messages.ts` and is toggled via `<LanguageSwitcher />`.
+
+## Inside React components — use `useT()`
+
+```tsx
+// ❌ BAD: hardcoded English strings
+export function MyCard() {
+  return (
+    <button title="Reset">Send</button>
+  )
+}
+
+// ✅ GOOD: read from the active dictionary
+import { useT } from '@/i18n'
+
+export function MyCard() {
+  const t = useT()
+  return (
+    <button title={t.common.reset}>{t.common.send}</button>
+  )
+}
+```
+
+## Outside components — use `getMessages()`
+
+For helpers that run outside React (toasts, store callbacks, route
+guards), read the dictionary freshly each call — do not cache it.
+
+```tsx
+import { getMessages } from '@/i18n'
+
+export function toastError(err: unknown) {
+  const fallback = getMessages().common.somethingWentWrong
+  // …
+}
+```
+
+## Interpolation and plurals
+
+Values that need interpolation or plural forms are defined as functions
+in `Messages`. Call them instead of string-concatenating:
+
+```tsx
+// ❌ BAD
+<p>{`Say hello to ${name}.`}</p>
+
+// ✅ GOOD
+<p>{t.chat.sayHello(name)}</p>
+```
+
+When a new string is needed, add a key to **both** `en-US` and `ru` in
+`src/i18n/messages.ts` (TypeScript will enforce this via the `Messages`
+type).
+
+## Do NOT translate
+
+- Server-provided content: character names, titles, personalities,
+  place/location names and descriptions.
+- The `location.locale` chip — that's the authored locale from the API,
+  independent of UI language.
+- Error messages thrown by the API (pass them through to `toastError`).
+
+## Locale-aware formatting
+
+When formatting dates or numbers, pass the active language so output
+matches the chosen UI locale:
+
+```tsx
+const locale = useGameStore((s) => s.uiLanguage)
+d.toLocaleDateString(locale, { weekday: 'short' })
+```

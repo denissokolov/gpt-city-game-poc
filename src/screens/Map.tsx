@@ -7,9 +7,12 @@ import { getLocationPosition } from '@/game/cityLayout'
 import { avatarUrl } from '@/game/avatars'
 import { Skeleton } from '@/components/Skeleton'
 import { toastError } from '@/components/Toaster'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
 export default function MapScreen() {
+  const t = useT()
   const navigate = useNavigate()
   const player = useGameStore((s) => s.player)
   const currentLocationId = useGameStore((s) => s.currentLocationId)
@@ -72,28 +75,28 @@ export default function MapScreen() {
             className="h-10 w-10 rounded-full border border-white/10"
           />
           <div>
-            <p className="text-xs text-city-muted">Playing as</p>
+            <p className="text-xs text-city-muted">{t.map.playingAs}</p>
             <p className="font-display font-semibold">
               {player.firstName} {player.lastName}
             </p>
           </div>
         </div>
-        <button
-          className="btn-ghost text-xs"
-          onClick={() => navigate('/onboarding')}
-        >
-          Change avatar
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <button
+            className="btn-ghost text-xs"
+            onClick={() => navigate('/onboarding')}
+          >
+            {t.common.changeAvatar}
+          </button>
+        </div>
       </header>
 
       <section className="mx-auto max-w-5xl">
         <h1 className="font-display text-2xl sm:text-3xl font-bold mb-1">
-          The City
+          {t.map.heading}
         </h1>
-        <p className="text-city-muted text-sm mb-4">
-          Click your current location to explore it, or click a neighbor to walk
-          over.
-        </p>
+        <p className="text-city-muted text-sm mb-4">{t.map.description}</p>
 
         <div className="relative card overflow-hidden aspect-[16/10] min-h-[360px]">
           <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:32px_32px]" />

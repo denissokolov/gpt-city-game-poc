@@ -10,23 +10,18 @@ import {
 import { useGameStore, type PlayerSex } from '@/game/store'
 import { createUser } from '@/api/users'
 import { toastError } from '@/components/Toaster'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
 function randomSeed() {
   return Math.random().toString(36).slice(2, 10)
 }
 
-const SEX_OPTIONS: { value: PlayerSex; label: string }[] = [
-  { value: 'female', label: 'Female' },
-  { value: 'male', label: 'Male' },
-  { value: 'non_binary', label: 'Non-binary' },
-]
-
-const DEFAULT_TITLE = 'Traveler'
-const DEFAULT_BACKSTORY =
-  'A curious visitor exploring GPT City, eager to meet its inhabitants.'
+const SEX_ORDER: PlayerSex[] = ['female', 'male', 'non_binary']
 
 export default function OnboardingScreen() {
+  const t = useT()
   const navigate = useNavigate()
   const existing = useGameStore((s) => s.player)
   const setPlayer = useGameStore((s) => s.setPlayer)
@@ -94,17 +89,19 @@ export default function OnboardingScreen() {
         onSubmit={handleSubmit}
         className="card w-full max-w-2xl p-6 sm:p-8"
       >
-        <header className="mb-6">
-          <p className="text-xs uppercase tracking-[0.2em] text-city-accent">
-            Welcome to
-          </p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1">
-            GPT City
-          </h1>
-          <p className="text-city-muted mt-2 text-sm sm:text-base">
-            Create your avatar, walk the streets, and strike up conversations
-            with the minds who live here.
-          </p>
+        <header className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-city-accent">
+              {t.onboarding.welcomeTo}
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl font-bold mt-1">
+              {t.onboarding.title}
+            </h1>
+            <p className="text-city-muted mt-2 text-sm sm:text-base">
+              {t.onboarding.subtitle}
+            </p>
+          </div>
+          <LanguageSwitcher className="shrink-0" />
         </header>
 
         <div className="grid gap-6 sm:grid-cols-[auto,1fr] sm:items-start">
@@ -116,36 +113,44 @@ export default function OnboardingScreen() {
               transition={{ duration: 0.2 }}
               className="h-40 w-40 rounded-full border-2 border-city-accent/40 shadow-[0_0_40px_-10px_rgba(245,177,76,0.6)] overflow-hidden bg-white/5"
             >
-              <img src={preview} alt="Avatar preview" className="h-full w-full" />
+              <img
+                src={preview}
+                alt={t.onboarding.avatarPreviewAlt}
+                className="h-full w-full"
+              />
             </motion.div>
             <button
               type="button"
               className="btn-ghost text-xs"
               onClick={() => setSeed(randomSeed())}
             >
-              Shuffle
+              {t.common.shuffle}
             </button>
           </div>
 
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="text-sm text-city-muted">First name</span>
+                <span className="text-sm text-city-muted">
+                  {t.onboarding.firstName}
+                </span>
                 <input
                   autoFocus
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Ada"
+                  placeholder={t.onboarding.firstNamePlaceholder}
                   className="input mt-1"
                   maxLength={40}
                 />
               </label>
               <label className="block">
-                <span className="text-sm text-city-muted">Last name</span>
+                <span className="text-sm text-city-muted">
+                  {t.onboarding.lastName}
+                </span>
                 <input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Lovelace"
+                  placeholder={t.onboarding.lastNamePlaceholder}
                   className="input mt-1"
                   maxLength={40}
                 />
@@ -154,7 +159,9 @@ export default function OnboardingScreen() {
 
             <div className="grid grid-cols-[auto,1fr] gap-3 items-end">
               <label className="block">
-                <span className="text-sm text-city-muted">Age</span>
+                <span className="text-sm text-city-muted">
+                  {t.onboarding.age}
+                </span>
                 <input
                   type="number"
                   min={1}
@@ -165,21 +172,23 @@ export default function OnboardingScreen() {
                 />
               </label>
               <div>
-                <span className="text-sm text-city-muted">Sex</span>
+                <span className="text-sm text-city-muted">
+                  {t.onboarding.sex}
+                </span>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  {SEX_OPTIONS.map((opt) => (
+                  {SEX_ORDER.map((value) => (
                     <button
                       type="button"
-                      key={opt.value}
-                      onClick={() => setSex(opt.value)}
+                      key={value}
+                      onClick={() => setSex(value)}
                       className={cn(
                         'rounded-lg border px-3 py-1.5 text-sm transition-colors',
-                        sex === opt.value
+                        sex === value
                           ? 'border-city-accent bg-city-accent/10 text-city-accent'
                           : 'border-white/10 text-city-muted hover:border-white/25',
                       )}
                     >
-                      {opt.label}
+                      {t.sex[value]}
                     </button>
                   ))}
                 </div>
@@ -188,15 +197,15 @@ export default function OnboardingScreen() {
 
             <label className="block">
               <span className="text-sm text-city-muted">
-                Title{' '}
+                {t.onboarding.titleLabel}{' '}
                 <span className="text-city-muted/70">
-                  (how the city knows you)
+                  {t.onboarding.titleHint}
                 </span>
               </span>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={DEFAULT_TITLE}
+                placeholder={t.onboarding.titlePlaceholder}
                 className="input mt-1"
                 maxLength={80}
               />
@@ -204,15 +213,15 @@ export default function OnboardingScreen() {
 
             <label className="block">
               <span className="text-sm text-city-muted">
-                Backstory{' '}
+                {t.onboarding.backstoryLabel}{' '}
                 <span className="text-city-muted/70">
-                  (where you came from, what shaped you)
+                  {t.onboarding.backstoryHint}
                 </span>
               </span>
               <textarea
                 value={backstory}
                 onChange={(e) => setBackstory(e.target.value)}
-                placeholder={DEFAULT_BACKSTORY}
+                placeholder={t.onboarding.backstoryPlaceholder}
                 rows={3}
                 className="input mt-1 resize-y min-h-[84px]"
                 maxLength={600}
@@ -223,7 +232,9 @@ export default function OnboardingScreen() {
             </label>
 
             <div>
-              <span className="text-sm text-city-muted">Avatar style</span>
+              <span className="text-sm text-city-muted">
+                {t.onboarding.avatarStyle}
+              </span>
               <div className="mt-2 grid grid-cols-5 sm:grid-cols-5 gap-2">
                 {PLAYER_AVATAR_STYLES.map((s) => (
                   <button
@@ -258,8 +269,8 @@ export default function OnboardingScreen() {
             disabled={!canContinue || createUserMutation.isPending}
           >
             {createUserMutation.isPending
-              ? 'Creating…'
-              : 'Enter the city →'}
+              ? t.onboarding.submitting
+              : t.onboarding.submit}
           </button>
         </div>
       </motion.form>
