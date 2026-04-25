@@ -8,6 +8,12 @@ export function fetchSystemMessages(id: string, userId: string) {
   )
 }
 
+export function listSystemChats(userId: string) {
+  return apiFetch<SystemChatDto[]>('/system-chats', {
+    headers: { 'x-user-id': userId },
+  })
+}
+
 export function createSystemChat(userId: string) {
   return apiFetch<SystemChatDto>('/system-chats', {
     method: 'POST',
@@ -23,5 +29,13 @@ export function useSystemMessages(
     queryKey: ['system-messages', chatId],
     enabled: Boolean(chatId && userId),
     queryFn: () => fetchSystemMessages(chatId as string, userId as string),
+  })
+}
+
+export function useSystemChats(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['system-chats', userId],
+    enabled: Boolean(userId),
+    queryFn: () => listSystemChats(userId as string),
   })
 }

@@ -22,6 +22,7 @@ import Markdown from '@/components/Markdown'
 import ToolInvocation, {
   isAnyToolPart,
 } from '@/components/SystemChat/ToolInvocation'
+import SystemChatHistoryList from '@/components/SystemChat/SystemChatHistoryList'
 import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
@@ -160,9 +161,25 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
 
   const userId = player?.id ?? null
 
+  const [view, setView] = useState<'chat' | 'history'>('chat')
+
+  const queryClient = useQueryClient()
+
   const ensureMutation = useMutation({
     mutationFn: (uid: string) => createSystemChat(uid),
     onSuccess: (chat) => setSystemChatId(chat.id),
+    onError: (err) => toastError(err),
+  })
+
+  const newChatMutation = useMutation({
+    mutationFn: (uid: string) => createSystemChat(uid),
+    onSuccess: (chat) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['system-chats', userId],
+      })
+      setSystemChatId(chat.id)
+      setView('chat')
+    },
     onError: (err) => toastError(err),
   })
 
@@ -193,6 +210,9 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
     [messagesQuery.data],
   )
 
+  const inHistory = view === 'history'
+  const historyButtonLabel = inHistory ? t.systemChat.back : t.systemChat.history
+
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
@@ -207,20 +227,43 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
             {t.systemChat.subtitle}
           </p>
         </div>
+        {userId && (
+          <>
+            <button
+              type="button"
+              className="btn-ghost ml-auto inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0"
+              onClick={() => {
+                if (newChatMutation.isPending) return
+                newChatMutation.mutate(userId)
+              }}
+              disabled={newChatMutation.isPending}
+              aria-label={t.systemChat.newChat}
+              title={t.systemChat.newChat}
+            >
+              <PlusIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="btn-ghost inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0"
+              onClick={() => setView((v) => (v === 'history' ? 'chat' : 'history'))}
+              aria-label={historyButtonLabel}
+              aria-pressed={inHistory}
+              title={historyButtonLabel}
+            >
+              {inHistory ? (
+                <ArrowLeftIcon className="h-4 w-4" />
+              ) : (
+                <HistoryIcon className="h-4 w-4" />
+              )}
+            </button>
+          </>
+        )}
         <button
           type="button"
-          className="btn-ghost ml-auto text-xs"
-          onClick={() => {
-            if (systemChatId) forgetSystemChatId()
-            lastAttemptedFor.current = null
-          }}
-          title={t.systemChat.newConversation}
-        >
-          {t.systemChat.newConversation}
-        </button>
-        <button
-          type="button"
-          className="btn-ghost shrink-0"
+          className={cn(
+            'btn-ghost inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0',
+            !userId && 'ml-auto',
+          )}
           aria-label={t.systemChat.close}
           onClick={onClose}
         >
@@ -228,7 +271,20 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
         </button>
       </header>
 
-      {isReady && systemChatId && userId ? (
+      {inHistory && userId ? (
+        <SystemChatHistoryList
+          userId={userId}
+          currentChatId={systemChatId}
+          onSelect={(id) => {
+            setSystemChatId(id)
+            setView('chat')
+          }}
+          onCreated={(id) => {
+            setSystemChatId(id)
+            setView('chat')
+          }}
+        />
+      ) : isReady && systemChatId && userId ? (
         <SystemChatConversation
           key={systemChatId}
           chatId={systemChatId}
@@ -300,6 +356,9 @@ function SystemChatConversation({
       void queryClient.invalidateQueries({
         queryKey: ['system-messages', chatId],
       })
+      // The chat title is auto-generated from the first user message, so
+      // refresh the list to pick up new titles and updatedAt order.
+      void queryClient.invalidateQueries({ queryKey: ['system-chats', userId] })
     },
     onError: (err) => {
       if (isStaleChatError(err)) {
@@ -486,6 +545,61 @@ function SparklesIcon({ className }: { className?: string }) {
       <path d="m12 3 1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7Z" />
       <path d="M5 17l.8 2 2 .8-2 .8L5 22.8 4.2 20.6 2.2 19.8l2-.8Z" />
       <path d="M19 13l.6 1.5L21 15l-1.4.5-.6 1.5-.6-1.5L17 15l1.4-.5Z" />
+    </svg>
+  )
+}
+
+function HistoryIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  )
+}
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  )
+}
+
+function ArrowLeftIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
     </svg>
   )
 }

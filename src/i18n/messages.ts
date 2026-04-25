@@ -62,7 +62,11 @@ export type Messages = {
     close: string;
     placeholder: string;
     empty: string;
-    newConversation: string;
+    history: string;
+    back: string;
+    newChat: string;
+    untitledChat: string;
+    historyEmpty: string;
     typing: string;
     staleConversation: string;
     toolRunning: string;
@@ -176,7 +180,11 @@ const en: Messages = {
     placeholder: "Ask the assistant to create or change something…",
     empty:
       "Hi! I can help you create locations, places, and characters, or update existing ones. What would you like to do?",
-    newConversation: "New",
+    history: "History",
+    back: "Back",
+    newChat: "New chat",
+    untitledChat: "Untitled chat",
+    historyEmpty: "No previous chats yet.",
     typing: "thinking…",
     staleConversation:
       "This assistant chat is no longer available. Starting a fresh one…",
@@ -322,7 +330,11 @@ const ru: Messages = {
     placeholder: "Попросите ассистента создать или изменить что-нибудь…",
     empty:
       "Привет! Я помогу создать локации, места и персонажей или изменить существующих. С чего начнём?",
-    newConversation: "Новый",
+    history: "История",
+    back: "Назад",
+    newChat: "Новый чат",
+    untitledChat: "Без названия",
+    historyEmpty: "Прошлых чатов пока нет.",
     typing: "думает…",
     staleConversation:
       "Этот чат с ассистентом больше недоступен. Начинаем новый…",
