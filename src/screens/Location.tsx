@@ -19,8 +19,6 @@ export default function LocationScreen() {
   const { id } = useParams<{ id: string }>()
   const player = useGameStore((s) => s.player)
   const setCurrentLocation = useGameStore((s) => s.setCurrentLocation)
-  const getChatId = useGameStore((s) => s.getChatId)
-  const rememberChatId = useGameStore((s) => s.rememberChatId)
 
   const { data: location, isLoading, error } = useLocationState(id)
 
@@ -45,16 +43,12 @@ export default function LocationScreen() {
 
   async function openChat(character: CharacterDto, place: PlaceStateDto) {
     if (!player) return
-    const existing = getChatId(place.id, character.id)
-    if (existing) {
-      navigate(`/chat/${existing}?placeId=${place.id}&characterId=${character.id}`)
-      return
-    }
+    // Always start a fresh conversation: each tap on a character spawns a new
+    // chat instead of resuming the previous one for this character/place.
     const chat = await createChatMutation.mutateAsync({
       body: { characterIds: [character.id], placeId: place.id },
       userId: player.id,
     })
-    rememberChatId(place.id, character.id, chat.id)
     navigate(`/chat/${chat.id}?placeId=${place.id}&characterId=${character.id}`)
   }
 

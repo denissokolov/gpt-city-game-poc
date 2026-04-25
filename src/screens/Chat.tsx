@@ -49,7 +49,6 @@ export default function ChatScreen() {
 
   const player = useGameStore((s) => s.player)
   const currentLocationId = useGameStore((s) => s.currentLocationId)
-  const forgetChatId = useGameStore((s) => s.forgetChatId)
   const uiLanguage = useGameStore((s) => s.uiLanguage)
 
   const { data: location } = useLocationState(currentLocationId ?? undefined)
@@ -85,7 +84,7 @@ export default function ChatScreen() {
 
   // A chat id can go stale within a session if the backend drops or rotates
   // it (e.g. staging DB reset). In that case the send fails with 403/404;
-  // forget the id so the next tap creates a fresh chat.
+  // bounce back to the location so the next tap creates a fresh chat.
   function isStaleChatError(err: unknown): boolean {
     const msg = err instanceof Error ? err.message : String(err)
     return (
@@ -100,8 +99,7 @@ export default function ChatScreen() {
     id: chatId,
     transport,
     onError: (err) => {
-      if (isStaleChatError(err) && placeId && characterId) {
-        forgetChatId(placeId, characterId)
+      if (isStaleChatError(err)) {
         toastError(t.chat.staleConversation)
         navigate(`/location/${currentLocationId ?? ''}`, { replace: true })
         return
@@ -152,12 +150,6 @@ export default function ChatScreen() {
     void sendMessage({ text })
   }
 
-  function handleReset() {
-    if (!placeId || !characterId) return
-    forgetChatId(placeId, characterId)
-    navigate(`/location/${currentLocationId ?? ''}`)
-  }
-
   if (!player) return null
 
   const isStreaming = status === 'streaming' || status === 'submitted'
@@ -204,9 +196,6 @@ export default function ChatScreen() {
                 <InfoIcon className="h-4 w-4" />
               </button>
             )}
-            <button className="btn-ghost text-xs" onClick={handleReset} title={t.common.reset}>
-              {t.common.reset}
-            </button>
           </div>
         </div>
       </header>

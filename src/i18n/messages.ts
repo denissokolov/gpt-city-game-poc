@@ -10,7 +10,6 @@ export type Messages = {
     back: string;
     backToMap: string;
     changeAvatar: string;
-    reset: string;
     shuffle: string;
     send: string;
     somethingWentWrong: string;
@@ -129,7 +128,6 @@ const en: Messages = {
     back: "Back",
     backToMap: "Back to map",
     changeAvatar: "Change avatar",
-    reset: "Reset",
     shuffle: "Shuffle",
     send: "Send",
     somethingWentWrong: "Something went wrong",
@@ -295,7 +293,6 @@ const ru: Messages = {
     back: "Назад",
     backToMap: "К карте",
     changeAvatar: "Сменить аватар",
-    reset: "Сброс",
     shuffle: "Перемешать",
     send: "Отправить",
     somethingWentWrong: "Что-то пошло не так",
