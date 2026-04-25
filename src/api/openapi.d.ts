@@ -144,6 +144,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/system-chats/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a system chat owned by the current user */
+        delete: operations["SystemChatsController_remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system-chats/{id}/messages": {
         parameters: {
             query?: never;
@@ -740,6 +757,43 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SystemChatDto"];
                 };
+            };
+        };
+    };
+    SystemChatsController_remove: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Chat deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User does not own the chat */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Chat not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

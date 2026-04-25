@@ -1,7 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { createSystemChat, useSystemChats } from '@/api/system-chats'
+import {
+  createSystemChat,
+  useDeleteSystemChat,
+  useSystemChats,
+} from '@/api/system-chats'
 import type { SystemChatDto } from '@/api/client'
 import { useGameStore } from '@/game/store'
 import { toastError } from '@/components/Toaster'
@@ -31,6 +35,7 @@ export default function SystemChatHistoryList({
   const t = useT()
   const uiLanguage = useGameStore((s) => s.uiLanguage)
   const queryClient = useQueryClient()
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const chatsQuery = useSystemChats(userId)
 
@@ -42,6 +47,9 @@ export default function SystemChatHistoryList({
     },
     onError: (err) => toastError(err),
   })
+
+  const deleteMutation = useDeleteSystemChat(userId)
+  const isDeleting = deleteMutation.isPending
 
   const sortedChats = useMemo(() => {
     const list = chatsQuery.data ?? []
@@ -100,27 +108,70 @@ export default function SystemChatHistoryList({
           const isCurrent = chat.id === currentChatId
           const title = chatTitle(chat) ?? t.systemChat.untitledChat
           const date = dateFormatter.format(new Date(chat.updatedAt))
+          const isPending = pendingDeleteId === chat.id
+          const isDeletingThis = isDeleting && isPending
           return (
             <motion.li
               key={chat.id}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15 }}
+              className={cn(
+                'flex items-stretch gap-1.5 rounded-xl border transition-colors',
+                isCurrent
+                  ? 'border-city-accent/40 bg-city-accent/10'
+                  : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]',
+                isPending && 'border-red-400/40 bg-red-500/5 hover:bg-red-500/5',
+              )}
             >
               <button
                 type="button"
                 onClick={() => onSelect(chat.id)}
+                disabled={isPending}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors',
-                  isCurrent
-                    ? 'border-city-accent/40 bg-city-accent/10 text-city-ink'
-                    : 'border-white/10 bg-white/[0.03] text-city-ink hover:bg-white/[0.06]',
+                  'flex min-w-0 flex-1 items-center gap-3 rounded-l-xl px-3 py-2.5 text-left text-sm text-city-ink transition-colors',
+                  'disabled:cursor-not-allowed disabled:opacity-60',
                 )}
                 aria-current={isCurrent ? 'true' : undefined}
               >
                 <span className="min-w-0 flex-1 truncate">{title}</span>
                 <span className="shrink-0 text-xs text-city-muted">{date}</span>
               </button>
+              {isPending ? (
+                <div className="flex items-center gap-1 pr-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isDeletingThis) return
+                      deleteMutation.mutate(chat.id, {
+                        onSettled: () => setPendingDeleteId(null),
+                      })
+                    }}
+                    disabled={isDeletingThis}
+                    className="rounded-lg px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t.systemChat.deleteConfirm}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDeleteId(null)}
+                    disabled={isDeletingThis}
+                    className="rounded-lg px-2 py-1 text-xs text-city-muted transition-colors hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t.systemChat.deleteCancel}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPendingDeleteId(chat.id)}
+                  disabled={isDeleting}
+                  aria-label={t.systemChat.deleteAriaLabel}
+                  className="flex shrink-0 items-center justify-center rounded-r-xl px-2.5 text-city-muted transition-colors hover:bg-white/[0.06] hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              )}
             </motion.li>
           )
         })}
@@ -157,6 +208,27 @@ function PlusIcon({ className }: { className?: string }) {
     >
       <path d="M12 5v14" />
       <path d="M5 12h14" />
+    </svg>
+  )
+}
+
+function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
     </svg>
   )
 }

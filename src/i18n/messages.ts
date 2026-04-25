@@ -69,6 +69,10 @@ export type Messages = {
     historyEmpty: string;
     typing: string;
     staleConversation: string;
+    deleteAriaLabel: string;
+    deleteConfirm: string;
+    deleteCancel: string;
+    deleteFailed: string;
     toolRunning: string;
     toolFinished: string;
     toolFailed: string;
@@ -188,6 +192,10 @@ const en: Messages = {
     typing: "thinking…",
     staleConversation:
       "This assistant chat is no longer available. Starting a fresh one…",
+    deleteAriaLabel: "Delete chat",
+    deleteConfirm: "Delete?",
+    deleteCancel: "Cancel",
+    deleteFailed: "Couldn't delete chat",
     toolRunning: "Running",
     toolFinished: "Used",
     toolFailed: "Failed",
@@ -338,6 +346,10 @@ const ru: Messages = {
     typing: "думает…",
     staleConversation:
       "Этот чат с ассистентом больше недоступен. Начинаем новый…",
+    deleteAriaLabel: "Удалить чат",
+    deleteConfirm: "Удалить?",
+    deleteCancel: "Отмена",
+    deleteFailed: "Не удалось удалить чат",
     toolRunning: "Выполняет",
     toolFinished: "Использовал",
     toolFailed: "Ошибка",
