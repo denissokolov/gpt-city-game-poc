@@ -65,6 +65,14 @@ export type Messages = {
     newConversation: string;
     typing: string;
     staleConversation: string;
+    toolRunning: string;
+    toolFinished: string;
+    toolFailed: string;
+    toolDenied: string;
+    toolInput: string;
+    toolOutput: string;
+    toolError: string;
+    tools: Record<string, string>;
   };
   loading: {
     statuses: string[];
@@ -172,6 +180,28 @@ const en: Messages = {
     typing: "thinking…",
     staleConversation:
       "This assistant chat is no longer available. Starting a fresh one…",
+    toolRunning: "Running",
+    toolFinished: "Used",
+    toolFailed: "Failed",
+    toolDenied: "Skipped",
+    toolInput: "Input",
+    toolOutput: "Result",
+    toolError: "Error",
+    tools: {
+      "create-character": "Create character",
+      "update-character": "Update character",
+      "delete-character": "Delete character",
+      "get-character": "Look up character",
+      "list-characters": "List characters",
+      "create-location": "Create location",
+      "update-location": "Update location",
+      "delete-location": "Delete location",
+      "get-location": "Look up location",
+      "list-locations": "List locations",
+      "create-place": "Create place",
+      "update-place": "Update place",
+      "delete-place": "Delete place",
+    },
   },
   loading: {
     heading: "Loading the scene",
@@ -296,6 +326,28 @@ const ru: Messages = {
     typing: "думает…",
     staleConversation:
       "Этот чат с ассистентом больше недоступен. Начинаем новый…",
+    toolRunning: "Выполняет",
+    toolFinished: "Использовал",
+    toolFailed: "Ошибка",
+    toolDenied: "Пропущено",
+    toolInput: "Параметры",
+    toolOutput: "Результат",
+    toolError: "Ошибка",
+    tools: {
+      "create-character": "Создать персонажа",
+      "update-character": "Обновить персонажа",
+      "delete-character": "Удалить персонажа",
+      "get-character": "Найти персонажа",
+      "list-characters": "Список персонажей",
+      "create-location": "Создать локацию",
+      "update-location": "Обновить локацию",
+      "delete-location": "Удалить локацию",
+      "get-location": "Найти локацию",
+      "list-locations": "Список локаций",
+      "create-place": "Создать место",
+      "update-place": "Обновить место",
+      "delete-place": "Удалить место",
+    },
   },
   loading: {
     heading: "Готовим сцену",

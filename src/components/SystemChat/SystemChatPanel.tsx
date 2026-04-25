@@ -19,17 +19,20 @@ import {
   useStreamReveal,
 } from '@/components/StreamingText'
 import Markdown from '@/components/Markdown'
+import ToolInvocation, {
+  isAnyToolPart,
+} from '@/components/SystemChat/ToolInvocation'
 import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
+type TextPart = { type: 'text'; text: string; state?: 'streaming' | 'done' }
+
+function isTextPart(p: UIMessage['parts'][number]): p is TextPart {
+  return p.type === 'text'
+}
+
 function partsToText(msg: UIMessage): string {
-  return msg.parts
-    .filter(
-      (p): p is { type: 'text'; text: string; state?: 'streaming' | 'done' } =>
-        p.type === 'text',
-    )
-    .map((p) => p.text)
-    .join('')
+  return msg.parts.filter(isTextPart).map((p) => p.text).join('')
 }
 
 function dtoToUIMessage(m: SystemMessageDto): UIMessage {
@@ -53,6 +56,70 @@ function AssistantMarkdown({
       <Markdown text={displayed} />
       {isRevealing && <StreamingCaret />}
     </>
+  )
+}
+
+function AssistantMessage({
+  message,
+  streamingThis,
+}: {
+  message: UIMessage
+  streamingThis: boolean
+}) {
+  const t = useT()
+  const renderable = message.parts.filter(
+    (p) => isTextPart(p) || isAnyToolPart(p),
+  )
+
+  if (renderable.length === 0) {
+    return (
+      <div className="max-w-[80%] rounded-2xl rounded-tl-sm border border-white/10 bg-white/[0.06] px-3.5 py-2 text-sm text-city-ink">
+        <TypingDots label={t.systemChat.typing} />
+      </div>
+    )
+  }
+
+  // Find the index of the last text part so only it streams.
+  let lastTextIdx = -1
+  for (let i = renderable.length - 1; i >= 0; i -= 1) {
+    if (isTextPart(renderable[i])) {
+      lastTextIdx = i
+      break
+    }
+  }
+
+  return (
+    <div className="flex max-w-[80%] flex-col items-stretch gap-2">
+      {renderable.map((part, idx) => {
+        if (isTextPart(part)) {
+          if (!part.text) return null
+          const isStreamingPart =
+            streamingThis &&
+            idx === lastTextIdx &&
+            (part.state === 'streaming' || part.state == null)
+          return (
+            <div
+              key={`text-${idx}`}
+              className="self-start rounded-2xl rounded-tl-sm border border-white/10 bg-white/[0.06] px-3.5 py-2 text-sm break-words text-city-ink"
+            >
+              <AssistantMarkdown
+                text={part.text}
+                streaming={isStreamingPart}
+              />
+            </div>
+          )
+        }
+        if (isAnyToolPart(part)) {
+          return (
+            <ToolInvocation
+              key={part.toolCallId ?? `tool-${idx}`}
+              part={part}
+            />
+          )
+        }
+        return null
+      })}
+    </div>
   )
 }
 
@@ -293,7 +360,6 @@ function SystemChatConversation({
 
           <AnimatePresence initial={false}>
             {messages.map((m, i) => {
-              const text = partsToText(m)
               const isUser = m.role === 'user'
               const isLast = i === messages.length - 1
               const isStreamingThis = !isUser && isLast && isStreaming
@@ -312,25 +378,16 @@ function SystemChatConversation({
                       <SparklesIcon className="h-4 w-4" />
                     </div>
                   )}
-                  <div
-                    className={cn(
-                      'max-w-[80%] rounded-2xl px-3.5 py-2 text-sm break-words',
-                      isUser
-                        ? 'bg-city-accent text-slate-900 rounded-tr-sm whitespace-pre-wrap'
-                        : 'bg-white/[0.06] border border-white/10 text-city-ink rounded-tl-sm',
-                    )}
-                  >
-                    {isUser ? (
-                      text
-                    ) : text ? (
-                      <AssistantMarkdown
-                        text={text}
-                        streaming={isStreamingThis}
-                      />
-                    ) : (
-                      <TypingDots label={t.systemChat.typing} />
-                    )}
-                  </div>
+                  {isUser ? (
+                    <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-city-accent px-3.5 py-2 text-sm whitespace-pre-wrap break-words text-slate-900">
+                      {partsToText(m)}
+                    </div>
+                  ) : (
+                    <AssistantMessage
+                      message={m}
+                      streamingThis={isStreamingThis}
+                    />
+                  )}
                   {isUser && player && (
                     <img
                       src={avatarUrl(player.avatarStyle, player.avatarSeed, 64)}
