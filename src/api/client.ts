@@ -9,6 +9,9 @@ export type CreateChatDto = components['schemas']['CreateChatDto']
 export type SendMessageDto = components['schemas']['SendMessageDto']
 export type CreateUserDto = components['schemas']['CreateUserDto']
 export type UserDto = components['schemas']['UserDto']
+export type SystemChatDto = components['schemas']['SystemChatDto']
+export type SystemMessageDto = components['schemas']['SystemMessageDto']
+export type SendSystemMessageDto = components['schemas']['SendSystemMessageDto']
 
 const STAGING_API = 'https://gpt-city-api-5950170b319a.herokuapp.com'
 

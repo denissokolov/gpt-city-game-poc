@@ -126,6 +126,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/system-chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List system chats owned by the current user */
+        get: operations["SystemChatsController_list"];
+        put?: never;
+        /** Create a new system chat for the current user. The title is auto-generated from the first user message. */
+        post: operations["SystemChatsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system-chats/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List messages of a system chat */
+        get: operations["SystemChatsController_listMessages"];
+        put?: never;
+        /** Send a message to a system chat (streaming response) */
+        post: operations["SystemChatsController_sendMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -394,6 +430,76 @@ export interface components {
              */
             backstory: string;
         };
+        SystemChatDto: {
+            /**
+             * @description Unique identifier of the system chat
+             * @example b2c3d4e5-f6a7-8901-bcde-f12345678901
+             */
+            id: string;
+            /**
+             * @description ID of the user who owns the system chat
+             * @example c3d4e5f6-a7b8-4012-bdef-123456789012
+             */
+            userId: string;
+            /**
+             * @description Human-readable title of the system chat. Auto-generated from the first user message; null until the user sends one.
+             * @example Tweak personalities of city characters
+             */
+            title: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @description Date and time when the system chat was created
+             * @example 2026-01-01T00:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Date and time when the system chat was last updated
+             * @example 2026-01-01T00:00:00.000Z
+             */
+            updatedAt: string;
+        };
+        SystemMessageDto: {
+            /**
+             * @description Unique identifier of the message
+             * @example d4e5f6a7-b8c9-4012-cdef-123456789012
+             */
+            id: string;
+            /**
+             * @description ID of the system chat this message belongs to
+             * @example b2c3d4e5-f6a7-8901-bcde-f12345678901
+             */
+            systemChatId: string;
+            /**
+             * @description ID of the user who owns the chat this message belongs to
+             * @example c3d4e5f6-a7b8-4012-bdef-123456789012
+             */
+            userId: string;
+            /**
+             * @description Role of the message author
+             * @example user
+             * @enum {string}
+             */
+            role: "user" | "assistant" | "system" | "tool";
+            /**
+             * @description Text content of the message
+             * @example Please create a new character named Alice.
+             */
+            content: string;
+            /**
+             * Format: date-time
+             * @description Date and time when the message was created
+             * @example 2026-01-01T00:00:00.000Z
+             */
+            createdAt: string;
+        };
+        SendSystemMessageDto: {
+            /**
+             * @description The message sent by the user to the system assistant
+             * @example Please create a new character named Alice, age 30.
+             */
+            message: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -445,6 +551,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Locale of the user performing the request */
+                "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
                 /** @description ID of the user performing the request */
                 "x-user-id": string;
             };
@@ -478,6 +586,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Locale of the user performing the request */
+                "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
                 /** @description ID of the user performing the request */
                 "x-user-id": string;
             };
@@ -532,6 +642,7 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description User time */
                 "x-user-time": string;
             };
             path: {
@@ -581,6 +692,139 @@ export interface operations {
             };
             /** @description Invalid request body */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SystemChatsController_list: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemChatDto"][];
+                };
+            };
+        };
+    };
+    SystemChatsController_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemChatDto"];
+                };
+            };
+        };
+    };
+    SystemChatsController_listMessages: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemMessageDto"][];
+                };
+            };
+            /** @description User does not own the chat */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Chat not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SystemChatsController_sendMessage: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+                /** @description Locale of the user performing the request */
+                "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendSystemMessageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User does not own the chat */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Chat not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

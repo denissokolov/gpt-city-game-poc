@@ -8,6 +8,9 @@ const OnboardingScreen = lazy(() => import('@/screens/Onboarding'))
 const MapScreen = lazy(() => import('@/screens/Map'))
 const LocationScreen = lazy(() => import('@/screens/Location'))
 const ChatScreen = lazy(() => import('@/screens/Chat'))
+const SystemChatLauncher = lazy(
+  () => import('@/components/SystemChat/SystemChatLauncher'),
+)
 
 function RequirePlayer({ children }: { children: React.ReactNode }) {
   const player = useGameStore((s) => s.player)
@@ -60,6 +63,9 @@ export default function App() {
           />
           <Route path="*" element={<Navigate to="/map" replace />} />
         </Routes>
+      </Suspense>
+      <Suspense fallback={null}>
+        <SystemChatLauncher />
       </Suspense>
       <Toaster />
     </>

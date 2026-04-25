@@ -40,6 +40,10 @@ type GameState = {
   timeOverride: string | null
   // Preferred UI language. Persisted across sessions.
   uiLanguage: UiLanguage
+  // Persisted id of the player's system assistant chat. The backend keeps
+  // these long-lived per user, so caching the id avoids creating a new
+  // chat on every page load.
+  systemChatId: string | null
   setPlayer: (player: PlayerProfile) => void
   clearPlayer: () => void
   setCurrentLocation: (id: string | null) => void
@@ -48,6 +52,8 @@ type GameState = {
   forgetChatId: (placeId: string, characterId: string) => void
   setTimeOverride: (iso: string | null) => void
   setUiLanguage: (language: UiLanguage) => void
+  setSystemChatId: (id: string | null) => void
+  forgetSystemChatId: () => void
 }
 
 function detectDefaultLanguage(): UiLanguage {
@@ -71,6 +77,7 @@ export const useGameStore = create<GameState>()(
       chatIdByNpcPlace: {},
       timeOverride: null,
       uiLanguage: detectDefaultLanguage(),
+      systemChatId: null,
       setPlayer: (player) => set({ player }),
       clearPlayer: () =>
         set((s) => ({
@@ -81,6 +88,7 @@ export const useGameStore = create<GameState>()(
           // Preserve the UI language across logout — it's a preference,
           // not profile data.
           uiLanguage: s.uiLanguage,
+          systemChatId: null,
         })),
       setCurrentLocation: (id) => set({ currentLocationId: id }),
       getChatId: (placeId, characterId) =>
@@ -100,17 +108,20 @@ export const useGameStore = create<GameState>()(
         }),
       setTimeOverride: (iso) => set({ timeOverride: iso }),
       setUiLanguage: (language) => set({ uiLanguage: language }),
+      setSystemChatId: (id) => set({ systemChatId: id }),
+      forgetSystemChatId: () => set({ systemChatId: null }),
     }),
     {
       name: 'gpt-city-game',
       storage: createJSONStorage(() => localStorage),
-      // v4 adds `uiLanguage` — the player's preferred UI language, used by
-      // the i18n layer. It's persisted so the choice survives reloads.
-      version: 4,
+      // v5 adds `systemChatId` — id of the player's persistent assistant
+      // chat used by the global "Game Assistant" panel.
+      version: 5,
       partialize: (state) => ({
         player: state.player,
         currentLocationId: state.currentLocationId,
         uiLanguage: state.uiLanguage,
+        systemChatId: state.systemChatId,
       }),
       migrate: (state, fromVersion) => {
         if (fromVersion < 2) {
@@ -120,12 +131,14 @@ export const useGameStore = create<GameState>()(
             chatIdByNpcPlace: {},
             timeOverride: null,
             uiLanguage: detectDefaultLanguage(),
+            systemChatId: null,
           } as GameState
         }
         const s = state as Partial<GameState> & {
           chatIdByNpcPlace?: unknown
           chatLanguage?: unknown
           uiLanguage?: unknown
+          systemChatId?: unknown
         }
         if (fromVersion < 4) {
           return {
@@ -137,6 +150,14 @@ export const useGameStore = create<GameState>()(
               (s.uiLanguage as UiLanguage | undefined) ??
               (s.chatLanguage as UiLanguage | undefined) ??
               detectDefaultLanguage(),
+            systemChatId: null,
+          } as GameState
+        }
+        if (fromVersion < 5) {
+          return {
+            ...(s as GameState),
+            systemChatId:
+              typeof s.systemChatId === 'string' ? s.systemChatId : null,
           } as GameState
         }
         return state as GameState

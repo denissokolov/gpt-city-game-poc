@@ -55,6 +55,17 @@ export type Messages = {
     messagePlaceholder: (name: string | undefined) => string;
     staleConversation: string;
   };
+  systemChat: {
+    title: string;
+    subtitle: string;
+    open: string;
+    close: string;
+    placeholder: string;
+    empty: string;
+    newConversation: string;
+    typing: string;
+    staleConversation: string;
+  };
   loading: {
     statuses: string[];
     heading: string;
@@ -148,6 +159,19 @@ const en: Messages = {
       name ? `Message ${name}…` : "Type a message…",
     staleConversation:
       "This conversation is no longer available. Starting a fresh one…",
+  },
+  systemChat: {
+    title: "Game Assistant",
+    subtitle: "Build and manage your city",
+    open: "Open game assistant",
+    close: "Close game assistant",
+    placeholder: "Ask the assistant to create or change something…",
+    empty:
+      "Hi! I can help you create locations, places, and characters, or update existing ones. What would you like to do?",
+    newConversation: "New",
+    typing: "thinking…",
+    staleConversation:
+      "This assistant chat is no longer available. Starting a fresh one…",
   },
   loading: {
     heading: "Loading the scene",
@@ -259,6 +283,19 @@ const ru: Messages = {
     messagePlaceholder: (name) =>
       name ? `Написать ${name}…` : "Введите сообщение…",
     staleConversation: "Эта беседа больше недоступна. Начинаем новую…",
+  },
+  systemChat: {
+    title: "Игровой ассистент",
+    subtitle: "Стройте и управляйте городом",
+    open: "Открыть игрового ассистента",
+    close: "Закрыть игрового ассистента",
+    placeholder: "Попросите ассистента создать или изменить что-нибудь…",
+    empty:
+      "Привет! Я помогу создать локации, места и персонажей или изменить существующих. С чего начнём?",
+    newConversation: "Новый",
+    typing: "думает…",
+    staleConversation:
+      "Этот чат с ассистентом больше недоступен. Начинаем новый…",
   },
   loading: {
     heading: "Готовим сцену",

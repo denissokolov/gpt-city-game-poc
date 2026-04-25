@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
 
-interface StreamingTextProps {
-  text: string
+interface UseStreamRevealOptions {
+  /** Whether the source text is still being streamed in. */
   streaming?: boolean
   /** Minimum characters per second when there's little backlog. */
   baseCps?: number
-  /** Show a blinking caret while text is still being revealed. */
-  showCaret?: boolean
-  className?: string
 }
 
 /**
@@ -17,13 +14,10 @@ interface StreamingTextProps {
  * in unevenly sized bursts. The reveal speed adapts to the backlog so it never
  * falls noticeably behind the stream.
  */
-export default function StreamingText({
-  text,
-  streaming = false,
-  baseCps = 45,
-  showCaret = true,
-  className,
-}: StreamingTextProps) {
+export function useStreamReveal(
+  text: string,
+  { streaming = false, baseCps = 45 }: UseStreamRevealOptions = {},
+) {
   const [displayed, setDisplayed] = useState(() => (streaming ? '' : text))
   const lenRef = useRef<number>(streaming ? 0 : text.length)
   const rafRef = useRef<number | null>(null)
@@ -80,20 +74,51 @@ export default function StreamingText({
     }
   }, [text, streaming, baseCps])
 
-  const caretVisible = showCaret && (streaming || displayed.length < text.length)
+  const isRevealing = streaming || displayed.length < text.length
+
+  return { displayed, isRevealing }
+}
+
+interface StreamingTextProps {
+  text: string
+  streaming?: boolean
+  /** Minimum characters per second when there's little backlog. */
+  baseCps?: number
+  /** Show a blinking caret while text is still being revealed. */
+  showCaret?: boolean
+  className?: string
+}
+
+export default function StreamingText({
+  text,
+  streaming = false,
+  baseCps = 45,
+  showCaret = true,
+  className,
+}: StreamingTextProps) {
+  const { displayed, isRevealing } = useStreamReveal(text, {
+    streaming,
+    baseCps,
+  })
+
+  const caretVisible = showCaret && isRevealing
 
   return (
     <span className={className}>
       {displayed}
-      {caretVisible && (
-        <span
-          className={cn(
-            'inline-block align-[-0.15em] ml-[1px] w-[2px] h-[1em]',
-            'bg-current opacity-70 animate-pulse rounded-[1px]',
-          )}
-          aria-hidden="true"
-        />
-      )}
+      {caretVisible && <StreamingCaret />}
     </span>
+  )
+}
+
+export function StreamingCaret() {
+  return (
+    <span
+      className={cn(
+        'inline-block align-[-0.15em] ml-[1px] w-[2px] h-[1em]',
+        'bg-current opacity-70 animate-pulse rounded-[1px]',
+      )}
+      aria-hidden="true"
+    />
   )
 }
