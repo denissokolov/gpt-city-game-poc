@@ -1,3 +1,4 @@
+import { useGameStore } from '@/game/store'
 import type { components } from './openapi'
 
 export type CharacterDto = components['schemas']['CharacterDto']
@@ -27,16 +28,22 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`
   const headers = new Headers(init.headers)
   if (init.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
+
+  console.log(useGameStore.getState())
+
   headers.set('Accept', 'application/json')
+  // Tell the backend which locale the user is viewing the app in so it can
+  // localize generated content. Callers can still override this by passing
+  // `x-locale` explicitly.
+  if (!headers.has('x-locale')) {
+    headers.set('x-locale', useGameStore.getState().uiLanguage)
+  }
   const response = await fetch(url, { ...init, headers })
   if (!response.ok) {
     let detail = ''

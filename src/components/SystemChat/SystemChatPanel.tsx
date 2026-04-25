@@ -3,25 +3,14 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import {
-  API_BASE_URL,
-  type SystemMessageDto,
-} from '@/api/client'
-import {
-  createSystemChat,
-  useSystemMessages,
-} from '@/api/system-chats'
+import { API_BASE_URL, type SystemMessageDto } from '@/api/client'
+import { createSystemChat, useSystemMessages } from '@/api/system-chats'
 import { useGameStore } from '@/game/store'
 import { avatarUrl } from '@/game/avatars'
 import { toastError } from '@/components/Toaster'
-import {
-  StreamingCaret,
-  useStreamReveal,
-} from '@/components/StreamingText'
+import { StreamingCaret, useStreamReveal } from '@/components/StreamingText'
 import Markdown from '@/components/Markdown'
-import ToolInvocation, {
-  isAnyToolPart,
-} from '@/components/SystemChat/ToolInvocation'
+import ToolInvocation, { isAnyToolPart } from '@/components/SystemChat/ToolInvocation'
 import SystemChatHistoryList from '@/components/SystemChat/SystemChatHistoryList'
 import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
@@ -33,7 +22,10 @@ function isTextPart(p: UIMessage['parts'][number]): p is TextPart {
 }
 
 function partsToText(msg: UIMessage): string {
-  return msg.parts.filter(isTextPart).map((p) => p.text).join('')
+  return msg.parts
+    .filter(isTextPart)
+    .map((p) => p.text)
+    .join('')
 }
 
 function dtoToUIMessage(m: SystemMessageDto): UIMessage {
@@ -44,13 +36,7 @@ function dtoToUIMessage(m: SystemMessageDto): UIMessage {
   }
 }
 
-function AssistantMarkdown({
-  text,
-  streaming,
-}: {
-  text: string
-  streaming: boolean
-}) {
+function AssistantMarkdown({ text, streaming }: { text: string; streaming: boolean }) {
   const { displayed, isRevealing } = useStreamReveal(text, { streaming })
   return (
     <>
@@ -68,9 +54,7 @@ function AssistantMessage({
   streamingThis: boolean
 }) {
   const t = useT()
-  const renderable = message.parts.filter(
-    (p) => isTextPart(p) || isAnyToolPart(p),
-  )
+  const renderable = message.parts.filter((p) => isTextPart(p) || isAnyToolPart(p))
 
   if (renderable.length === 0) {
     return (
@@ -103,20 +87,12 @@ function AssistantMessage({
               key={`text-${idx}`}
               className="self-start rounded-2xl rounded-tl-sm border border-white/10 bg-white/[0.06] px-3.5 py-2 text-sm break-words text-city-ink"
             >
-              <AssistantMarkdown
-                text={part.text}
-                streaming={isStreamingPart}
-              />
+              <AssistantMarkdown text={part.text} streaming={isStreamingPart} />
             </div>
           )
         }
         if (isAnyToolPart(part)) {
-          return (
-            <ToolInvocation
-              key={part.toolCallId ?? `tool-${idx}`}
-              part={part}
-            />
-          )
+          return <ToolInvocation key={part.toolCallId ?? `tool-${idx}`} part={part} />
         }
         return null
       })}
@@ -126,11 +102,7 @@ function AssistantMessage({
 
 function TypingDots({ label }: { label: string }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 py-1"
-      role="status"
-      aria-label={label}
-    >
+    <span className="inline-flex items-center gap-1 py-1" role="status" aria-label={label}>
       <span className="h-1.5 w-1.5 rounded-full bg-city-muted animate-bounce [animation-delay:-0.3s]" />
       <span className="h-1.5 w-1.5 rounded-full bg-city-muted animate-bounce [animation-delay:-0.15s]" />
       <span className="h-1.5 w-1.5 rounded-full bg-city-muted animate-bounce" />
@@ -201,9 +173,7 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
 
   const messagesQuery = useSystemMessages(systemChatId, userId)
 
-  const isReady = Boolean(
-    userId && systemChatId && messagesQuery.isSuccess,
-  )
+  const isReady = Boolean(userId && systemChatId && messagesQuery.isSuccess)
 
   const initialMessages = useMemo<UIMessage[]>(
     () => (messagesQuery.data ?? []).map(dtoToUIMessage),
@@ -220,12 +190,8 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
           <SparklesIcon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="font-display font-semibold leading-tight">
-            {t.systemChat.title}
-          </p>
-          <p className="truncate text-xs text-city-muted">
-            {t.systemChat.subtitle}
-          </p>
+          <p className="font-display font-semibold leading-tight">{t.systemChat.title}</p>
+          <p className="truncate text-xs text-city-muted">{t.systemChat.subtitle}</p>
         </div>
         {userId && (
           <>
@@ -298,9 +264,7 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
       ) : (
         <div className="flex flex-1 items-center justify-center px-4 py-6 text-sm text-city-muted">
           {messagesQuery.isError || ensureMutation.isError ? (
-            <span className="text-red-300/90">
-              {t.common.somethingWentWrong}
-            </span>
+            <span className="text-red-300/90">{t.common.somethingWentWrong}</span>
           ) : (
             <TypingDots label={t.systemChat.typing} />
           )}
@@ -427,10 +391,7 @@ function SystemChatConversation({
                   key={m.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={cn(
-                    'flex items-start gap-2',
-                    isUser ? 'justify-end' : 'justify-start',
-                  )}
+                  className={cn('flex items-start gap-2', isUser ? 'justify-end' : 'justify-start')}
                 >
                   {!isUser && (
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-city-accent/15 text-city-accent">
@@ -442,10 +403,7 @@ function SystemChatConversation({
                       {partsToText(m)}
                     </div>
                   ) : (
-                    <AssistantMessage
-                      message={m}
-                      streamingThis={isStreamingThis}
-                    />
+                    <AssistantMessage message={m} streamingThis={isStreamingThis} />
                   )}
                   {isUser && player && (
                     <img
@@ -458,8 +416,7 @@ function SystemChatConversation({
               )
             })}
             {isStreaming &&
-              (messages.length === 0 ||
-                messages[messages.length - 1].role === 'user') && (
+              (messages.length === 0 || messages[messages.length - 1].role === 'user') && (
                 <motion.div
                   key="__typing__"
                   initial={{ opacity: 0, y: 8 }}
@@ -476,11 +433,7 @@ function SystemChatConversation({
               )}
           </AnimatePresence>
 
-          {error && (
-            <div className="text-center text-sm text-red-300/90">
-              {error.message}
-            </div>
-          )}
+          {error && <div className="text-center text-sm text-red-300/90">{error.message}</div>}
         </div>
       </main>
 
