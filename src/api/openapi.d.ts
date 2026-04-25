@@ -258,6 +258,11 @@ export interface components {
              * @enum {string}
              */
             provider: "openai" | "anthropic" | "google";
+            /**
+             * @description Optional custom system instructions appended to the default chat system prompt for this character. Use it to give the character extra in-world instructions, mannerisms or constraints that the default prompt does not cover.
+             * @example Always speak in short, blunt sentences. Refuse to discuss politics.
+             */
+            systemInstructions: Record<string, never> | null;
         };
         CreateChatDto: {
             /**

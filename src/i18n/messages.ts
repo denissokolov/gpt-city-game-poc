@@ -63,6 +63,7 @@ export type Messages = {
       role: string;
       personality: string;
       backstory: string;
+      systemInstructions: string;
     };
   };
   systemChat: {
@@ -194,6 +195,7 @@ const en: Messages = {
       role: "Role",
       personality: "Personality",
       backstory: "Backstory",
+      systemInstructions: "System instructions",
     },
   },
   systemChat: {
@@ -358,6 +360,7 @@ const ru: Messages = {
       role: "Роль",
       personality: "Характер",
       backstory: "Предыстория",
+      systemInstructions: "Системные указания",
     },
   },
   systemChat: {

@@ -1,0 +1,60 @@
+---
+description: One React component per file
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# One React component per file
+
+Each `.tsx` file exports exactly one React component. The file name matches
+the component name in `PascalCase` (e.g. `CharacterCard.tsx` exports
+`CharacterCard`).
+
+If you need a helper component, move it to its own file and import it.
+
+```tsx
+// ❌ BAD: two components in one file
+// CharacterCard.tsx
+export function Avatar({ src }: { src: string }) {
+  return <img src={src} />
+}
+
+export function CharacterCard({ character }: { character: Character }) {
+  return (
+    <div>
+      <Avatar src={character.avatarUrl} />
+      <span>{character.name}</span>
+    </div>
+  )
+}
+```
+
+```tsx
+// ✅ GOOD: split into Avatar.tsx and CharacterCard.tsx
+// Avatar.tsx
+export function Avatar({ src }: { src: string }) {
+  return <img src={src} />
+}
+
+// CharacterCard.tsx
+import { Avatar } from './Avatar'
+
+export function CharacterCard({ character }: { character: Character }) {
+  return (
+    <div>
+      <Avatar src={character.avatarUrl} />
+      <span>{character.name}</span>
+    </div>
+  )
+}
+```
+
+## Allowed exceptions
+
+- **Hooks and utilities** colocated with their owning component are fine
+  (e.g. `useCharacterCard` in `CharacterCard.tsx`).
+- **Types and constants** used only by the component may live in the
+  same file.
+- **Trivial render-only subcomponents** kept private (not exported) are
+  acceptable only when they are tiny and would never be reused. When in
+  doubt, extract.

@@ -22,6 +22,13 @@ function partsToText(msg: UIMessage): string {
     .join('')
 }
 
+// The OpenAPI schema types `systemInstructions` as `Record<string, never> | null`,
+// but the description and example say it's a string. Coerce defensively.
+function characterSystemInstructions(character: CharacterDto): string | null {
+  const raw = character.systemInstructions as unknown
+  return typeof raw === 'string' && raw.trim().length > 0 ? raw : null
+}
+
 function TypingDots({ label }: { label: string }) {
   return (
     <span className="inline-flex items-center gap-1 py-1" role="status" aria-label={label}>
@@ -372,77 +379,93 @@ function CharacterInfoModal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <motion.div
-        key="info-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.chat.info.title}
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 16, scale: 0.98 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="card fixed inset-x-3 top-1/2 z-50 -translate-y-1/2 max-h-[85vh] flex flex-col overflow-hidden bg-city-panel/95 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md"
-      >
-        <header className="flex items-start gap-4 border-b border-white/5 p-5">
-          <img
-            src={npcAvatarUrl(character)}
-            alt=""
-            className="h-16 w-16 shrink-0 rounded-full border border-white/10 bg-white/5"
-          />
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-lg font-semibold text-city-ink truncate">
-              {character.firstName} {character.lastName}
-            </h2>
-            <p className="text-sm text-city-accent/90 truncate">{character.title}</p>
-            {placeName && (
-              <p className="text-xs text-city-muted truncate mt-0.5">{placeName}</p>
-            )}
+      <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-3">
+        <motion.div
+          key="info-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.chat.info.title}
+          initial={{ opacity: 0, y: 16, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 16, scale: 0.98 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="card pointer-events-auto w-full max-h-[85vh] flex flex-col overflow-hidden bg-city-panel/95 sm:max-w-md"
+        >
+          <header className="flex items-start gap-4 border-b border-white/5 p-5">
+            <img
+              src={npcAvatarUrl(character)}
+              alt=""
+              className="h-16 w-16 shrink-0 rounded-full border border-white/10 bg-white/5"
+            />
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display text-lg font-semibold text-city-ink truncate">
+                {character.firstName} {character.lastName}
+              </h2>
+              <p className="text-sm text-city-accent/90 truncate">{character.title}</p>
+              {placeName && (
+                <p className="text-xs text-city-muted truncate mt-0.5">{placeName}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              className="btn-ghost p-2 shrink-0"
+              onClick={onClose}
+              aria-label={t.chat.info.close}
+              title={t.chat.info.close}
+            >
+              <CloseIcon className="h-4 w-4" />
+            </button>
+          </header>
+          <div className="overflow-y-auto p-5 space-y-4 text-sm">
+            <dl className="grid grid-cols-2 gap-4">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-city-muted">
+                  {t.chat.info.age}
+                </dt>
+                <dd className="mt-0.5 text-city-ink">{character.age}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-city-muted">
+                  {t.chat.info.sex}
+                </dt>
+                <dd className="mt-0.5 text-city-ink">
+                  {t.sex[character.sex as PlayerSex]}
+                </dd>
+              </div>
+            </dl>
+            <section>
+              <h3 className="text-xs uppercase tracking-wide text-city-muted">
+                {t.chat.info.personality}
+              </h3>
+              <p className="mt-1 text-city-ink whitespace-pre-wrap">
+                {character.personality}
+              </p>
+            </section>
+            <section>
+              <h3 className="text-xs uppercase tracking-wide text-city-muted">
+                {t.chat.info.backstory}
+              </h3>
+              <p className="mt-1 text-city-ink whitespace-pre-wrap">
+                {character.backstory}
+              </p>
+            </section>
+            {(() => {
+              const systemInstructions = characterSystemInstructions(character)
+              if (!systemInstructions) return null
+              return (
+                <section>
+                  <h3 className="text-xs uppercase tracking-wide text-city-muted">
+                    {t.chat.info.systemInstructions}
+                  </h3>
+                  <p className="mt-1 text-city-ink whitespace-pre-wrap">
+                    {systemInstructions}
+                  </p>
+                </section>
+              )
+            })()}
           </div>
-          <button
-            type="button"
-            className="btn-ghost p-2 shrink-0"
-            onClick={onClose}
-            aria-label={t.chat.info.close}
-            title={t.chat.info.close}
-          >
-            <CloseIcon className="h-4 w-4" />
-          </button>
-        </header>
-        <div className="overflow-y-auto p-5 space-y-4 text-sm">
-          <dl className="grid grid-cols-2 gap-4">
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-city-muted">
-                {t.chat.info.age}
-              </dt>
-              <dd className="mt-0.5 text-city-ink">{character.age}</dd>
-            </div>
-            <div>
-              <dt className="text-xs uppercase tracking-wide text-city-muted">
-                {t.chat.info.sex}
-              </dt>
-              <dd className="mt-0.5 text-city-ink">
-                {t.sex[character.sex as PlayerSex]}
-              </dd>
-            </div>
-          </dl>
-          <section>
-            <h3 className="text-xs uppercase tracking-wide text-city-muted">
-              {t.chat.info.personality}
-            </h3>
-            <p className="mt-1 text-city-ink whitespace-pre-wrap">
-              {character.personality}
-            </p>
-          </section>
-          <section>
-            <h3 className="text-xs uppercase tracking-wide text-city-muted">
-              {t.chat.info.backstory}
-            </h3>
-            <p className="mt-1 text-city-ink whitespace-pre-wrap">
-              {character.backstory}
-            </p>
-          </section>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </>
   )
 }

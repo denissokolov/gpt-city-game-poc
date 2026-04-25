@@ -1,0 +1,96 @@
+---
+description: Follow SOLID principles for all code, including React components
+alwaysApply: true
+---
+
+# SOLID Architecture
+
+Apply SOLID to every module — plain functions, classes, hooks, and React
+components alike. Prefer small, focused units that compose.
+
+## S — Single Responsibility
+
+Each module/function/component does one thing.
+
+```tsx
+// ❌ BAD: fetches, formats, and renders
+export function CharacterCard({ id }: { id: string }) {
+  const [data, setData] = useState<Character | null>(null)
+  useEffect(() => {
+    fetch(`/api/characters/${id}`)
+      .then((r) => r.json())
+      .then((c) => setData({ ...c, name: c.name.toUpperCase() }))
+  }, [id])
+  return <div>{data?.name}</div>
+}
+
+// ✅ GOOD: split fetching, formatting, and rendering
+const useCharacter = (id: string) => useQuery(['character', id], () => api.getCharacter(id))
+const formatName = (c: Character) => c.name.toUpperCase()
+
+export function CharacterCard({ id }: { id: string }) {
+  const { data } = useCharacter(id)
+  return <div>{data ? formatName(data) : null}</div>
+}
+```
+
+## O — Open/Closed
+
+Extend behavior via props, slots, or composition — not by editing existing
+components for every new variant.
+
+```tsx
+// ❌ BAD: branches per variant inside the component
+<Button kind="primary" /> // adds another `if (kind === 'ghost')` next time
+
+// ✅ GOOD: accept render slots / className, compose specialized wrappers
+<Button className="bg-primary">Save</Button>
+export const GhostButton = (p: ButtonProps) => <Button {...p} className="bg-transparent" />
+```
+
+## L — Liskov Substitution
+
+A specialized component must remain usable wherever its base contract is
+expected. Don't silently drop or repurpose props.
+
+```tsx
+// ❌ BAD: IconButton ignores `onClick` when `disabled` is set externally
+// ✅ GOOD: IconButton<ButtonProps> forwards every prop and only adds an icon
+export const IconButton = ({ icon, ...rest }: ButtonProps & { icon: ReactNode }) => (
+  <Button {...rest}>{icon}</Button>
+)
+```
+
+## I — Interface Segregation
+
+Components and functions accept only the props/args they actually use.
+Don't pass whole entities when a field will do.
+
+```tsx
+// ❌ BAD: forces callers to have a full User just to render a name
+function Greeting({ user }: { user: User }) { return <p>Hi {user.name}</p> }
+
+// ✅ GOOD
+function Greeting({ name }: { name: string }) { return <p>Hi {name}</p> }
+```
+
+## D — Dependency Inversion
+
+Depend on abstractions, not concretions. Inject side-effectful collaborators
+(API clients, stores, timers) so units can be tested and swapped.
+
+```tsx
+// ❌ BAD: component imports the concrete API client directly
+import { apiClient } from '@/api/client'
+
+// ✅ GOOD: receive the dependency (or a hook that wraps it)
+type SendMessage = (text: string) => Promise<void>
+export function ChatInput({ sendMessage }: { sendMessage: SendMessage }) { /* … */ }
+```
+
+## React-specific guidance
+
+- Split a component when it has more than one reason to re-render or change.
+- Move data fetching into hooks (`useX`); keep components rendering-only.
+- Keep prop surfaces narrow; lift shared logic into hooks or utilities
+  rather than growing one mega-component.
