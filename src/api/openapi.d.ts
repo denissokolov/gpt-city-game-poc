@@ -126,6 +126,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update an existing user profile */
+        patch: operations["UsersController_update"];
+        trace?: never;
+    };
     "/system-chats": {
         parameters: {
             query?: never;
@@ -452,6 +469,39 @@ export interface components {
              */
             backstory: string;
         };
+        UpdateUserDto: {
+            /**
+             * @description New first name of the user
+             * @example Ada
+             */
+            firstName?: string;
+            /**
+             * @description New last name of the user
+             * @example Lovelace
+             */
+            lastName?: string;
+            /**
+             * @description New age of the user in years
+             * @example 36
+             */
+            age?: number;
+            /**
+             * @description New sex of the user
+             * @example female
+             * @enum {string}
+             */
+            sex?: "male" | "female" | "non_binary";
+            /**
+             * @description New title or role of the user in the city
+             * @example Mathematician
+             */
+            title?: string;
+            /**
+             * @description New backstory of the user — where they came from and what shaped them
+             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
+             */
+            backstory?: string;
+        };
         SystemChatDto: {
             /**
              * @description Unique identifier of the system chat
@@ -714,6 +764,46 @@ export interface operations {
             };
             /** @description Invalid request body */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the user */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

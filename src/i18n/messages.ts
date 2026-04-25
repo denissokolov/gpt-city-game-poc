@@ -35,6 +35,11 @@ export type Messages = {
     avatarPreviewAlt: string;
     submit: string;
     submitting: string;
+    saveChanges: string;
+    saving: string;
+    startOver: string;
+    startOverConfirm: string;
+    startOverCancel: string;
   };
   map: {
     playingAs: string;
@@ -159,6 +164,11 @@ const en: Messages = {
     avatarPreviewAlt: "Avatar preview",
     submit: "Enter the city →",
     submitting: "Creating…",
+    saveChanges: "Save changes",
+    saving: "Saving…",
+    startOver: "Start over",
+    startOverConfirm: "Yes, start over",
+    startOverCancel: "Cancel",
   },
   map: {
     playingAs: "Playing as",
@@ -324,6 +334,11 @@ const ru: Messages = {
     avatarPreviewAlt: "Предпросмотр аватара",
     submit: "Войти в город →",
     submitting: "Создаём…",
+    saveChanges: "Сохранить изменения",
+    saving: "Сохраняем…",
+    startOver: "Начать заново",
+    startOverConfirm: "Да, начать заново",
+    startOverCancel: "Отмена",
   },
   map: {
     playingAs: "Вы играете за",

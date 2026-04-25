@@ -8,7 +8,7 @@ import {
   type AvatarStyle,
 } from '@/game/avatars'
 import { useGameStore, type PlayerSex } from '@/game/store'
-import { createUser } from '@/api/users'
+import { createUser, updateUser } from '@/api/users'
 import { toastError } from '@/components/Toaster'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useT } from '@/i18n'
@@ -25,6 +25,7 @@ export default function OnboardingScreen() {
   const navigate = useNavigate()
   const existing = useGameStore((s) => s.player)
   const setPlayer = useGameStore((s) => s.setPlayer)
+  const clearPlayer = useGameStore((s) => s.clearPlayer)
 
   const [firstName, setFirstName] = useState(existing?.firstName ?? '')
   const [lastName, setLastName] = useState(existing?.lastName ?? '')
@@ -36,6 +37,9 @@ export default function OnboardingScreen() {
   const [style, setStyle] = useState<AvatarStyle>(
     existing?.avatarStyle ?? 'adventurer',
   )
+  const [confirmStartOver, setConfirmStartOver] = useState(false)
+
+  const isEditing = existing !== null
 
   const preview = useMemo(() => avatarUrl(style, seed, 192), [style, seed])
   const canContinue =
@@ -49,20 +53,32 @@ export default function OnboardingScreen() {
     mutationFn: createUser,
     onError: (err) => toastError(err),
   })
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Parameters<typeof updateUser>[1] }) =>
+      updateUser(id, body),
+    onError: (err) => toastError(err),
+  })
+
+  const isSubmitting =
+    createUserMutation.isPending || updateUserMutation.isPending
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!canContinue || createUserMutation.isPending) return
+    if (!canContinue || isSubmitting) return
+
+    const body = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      age,
+      sex,
+      title: title.trim(),
+      backstory: backstory.trim(),
+    }
 
     try {
-      const user = await createUserMutation.mutateAsync({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        age,
-        sex,
-        title: title.trim(),
-        backstory: backstory.trim(),
-      })
+      const user = existing
+        ? await updateUserMutation.mutateAsync({ id: existing.id, body })
+        : await createUserMutation.mutateAsync(body)
       setPlayer({
         id: user.id,
         firstName: user.firstName,
@@ -78,6 +94,19 @@ export default function OnboardingScreen() {
     } catch {
       // toast already shown via onError
     }
+  }
+
+  function handleStartOver() {
+    clearPlayer()
+    setFirstName('')
+    setLastName('')
+    setAge(30)
+    setSex('non_binary')
+    setTitle('')
+    setBackstory('')
+    setStyle('adventurer')
+    setSeed(randomSeed())
+    setConfirmStartOver(false)
   }
 
   return (
@@ -262,15 +291,52 @@ export default function OnboardingScreen() {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-end gap-3">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              confirmStartOver ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleStartOver}
+                    disabled={isSubmitting}
+                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t.onboarding.startOverConfirm}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmStartOver(false)}
+                    disabled={isSubmitting}
+                    className="rounded-lg px-3 py-1.5 text-xs text-city-muted transition-colors hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t.onboarding.startOverCancel}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmStartOver(true)}
+                  disabled={isSubmitting}
+                  className="btn-ghost text-xs"
+                >
+                  {t.onboarding.startOver}
+                </button>
+              )
+            ) : null}
+          </div>
           <button
             type="submit"
             className="btn-primary"
-            disabled={!canContinue || createUserMutation.isPending}
+            disabled={!canContinue || isSubmitting}
           >
-            {createUserMutation.isPending
-              ? t.onboarding.submitting
-              : t.onboarding.submit}
+            {isEditing
+              ? isSubmitting
+                ? t.onboarding.saving
+                : t.onboarding.saveChanges
+              : isSubmitting
+                ? t.onboarding.submitting
+                : t.onboarding.submit}
           </button>
         </div>
       </motion.form>
