@@ -5,12 +5,12 @@ import { DefaultChatTransport, type UIMessage } from 'ai'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocationState } from '@/api/locations'
 import { useCharacters } from '@/api/characters'
-import { API_BASE_URL } from '@/api/client'
-import { useGameStore } from '@/game/store'
+import { API_BASE_URL, type CharacterDto } from '@/api/client'
+import { useGameStore, type PlayerSex } from '@/game/store'
 import { avatarUrl, npcAvatarUrl } from '@/game/avatars'
 import { toastError } from '@/components/Toaster'
 import StreamingText from '@/components/StreamingText'
-import { useT } from '@/i18n'
+import { useT, type Messages } from '@/i18n'
 import { cn } from '@/lib/cn'
 
 function partsToText(msg: UIMessage): string {
@@ -104,9 +104,19 @@ export default function ChatScreen() {
   })
 
   const [input, setInput] = useState('')
+  const [infoOpen, setInfoOpen] = useState(false)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!infoOpen) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setInfoOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [infoOpen])
 
   useEffect(() => {
     const scroller = scrollerRef.current
@@ -176,6 +186,17 @@ export default function ChatScreen() {
             </div>
           )}
           <div className="ml-auto flex items-center gap-2">
+            {character && (
+              <button
+                type="button"
+                className="btn-ghost p-2"
+                onClick={() => setInfoOpen(true)}
+                aria-label={t.chat.info.open}
+                title={t.chat.info.open}
+              >
+                <InfoIcon className="h-4 w-4" />
+              </button>
+            )}
             <button className="btn-ghost text-xs" onClick={handleReset} title={t.common.reset}>
               {t.common.reset}
             </button>
@@ -313,6 +334,152 @@ export default function ChatScreen() {
           </button>
         </div>
       </form>
+
+      <AnimatePresence>
+        {infoOpen && character && (
+          <CharacterInfoModal
+            t={t}
+            character={character}
+            placeName={place?.name}
+            onClose={() => setInfoOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  )
+}
+
+function CharacterInfoModal({
+  t,
+  character,
+  placeName,
+  onClose,
+}: {
+  t: Messages
+  character: CharacterDto
+  placeName: string | undefined
+  onClose: () => void
+}) {
+  return (
+    <>
+      <motion.div
+        key="info-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <motion.div
+        key="info-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.chat.info.title}
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 16, scale: 0.98 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        className="card fixed inset-x-3 top-1/2 z-50 -translate-y-1/2 max-h-[85vh] flex flex-col overflow-hidden bg-city-panel/95 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md"
+      >
+        <header className="flex items-start gap-4 border-b border-white/5 p-5">
+          <img
+            src={npcAvatarUrl(character)}
+            alt=""
+            className="h-16 w-16 shrink-0 rounded-full border border-white/10 bg-white/5"
+          />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display text-lg font-semibold text-city-ink truncate">
+              {character.firstName} {character.lastName}
+            </h2>
+            <p className="text-sm text-city-accent/90 truncate">{character.title}</p>
+            {placeName && (
+              <p className="text-xs text-city-muted truncate mt-0.5">{placeName}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            className="btn-ghost p-2 shrink-0"
+            onClick={onClose}
+            aria-label={t.chat.info.close}
+            title={t.chat.info.close}
+          >
+            <CloseIcon className="h-4 w-4" />
+          </button>
+        </header>
+        <div className="overflow-y-auto p-5 space-y-4 text-sm">
+          <dl className="grid grid-cols-2 gap-4">
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-city-muted">
+                {t.chat.info.age}
+              </dt>
+              <dd className="mt-0.5 text-city-ink">{character.age}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-city-muted">
+                {t.chat.info.sex}
+              </dt>
+              <dd className="mt-0.5 text-city-ink">
+                {t.sex[character.sex as PlayerSex]}
+              </dd>
+            </div>
+          </dl>
+          <section>
+            <h3 className="text-xs uppercase tracking-wide text-city-muted">
+              {t.chat.info.personality}
+            </h3>
+            <p className="mt-1 text-city-ink whitespace-pre-wrap">
+              {character.personality}
+            </p>
+          </section>
+          <section>
+            <h3 className="text-xs uppercase tracking-wide text-city-muted">
+              {t.chat.info.backstory}
+            </h3>
+            <p className="mt-1 text-city-ink whitespace-pre-wrap">
+              {character.backstory}
+            </p>
+          </section>
+        </div>
+      </motion.div>
+    </>
+  )
+}
+
+function InfoIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  )
+}
+
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
   )
 }

@@ -54,6 +54,16 @@ export type Messages = {
     theyFallback: string;
     messagePlaceholder: (name: string | undefined) => string;
     staleConversation: string;
+    info: {
+      open: string;
+      close: string;
+      title: string;
+      age: string;
+      sex: string;
+      role: string;
+      personality: string;
+      backstory: string;
+    };
   };
   systemChat: {
     title: string;
@@ -175,6 +185,16 @@ const en: Messages = {
       name ? `Message ${name}…` : "Type a message…",
     staleConversation:
       "This conversation is no longer available. Starting a fresh one…",
+    info: {
+      open: "About this character",
+      close: "Close",
+      title: "About",
+      age: "Age",
+      sex: "Sex",
+      role: "Role",
+      personality: "Personality",
+      backstory: "Backstory",
+    },
   },
   systemChat: {
     title: "Game Assistant",
@@ -329,6 +349,16 @@ const ru: Messages = {
     messagePlaceholder: (name) =>
       name ? `Написать ${name}…` : "Введите сообщение…",
     staleConversation: "Эта беседа больше недоступна. Начинаем новую…",
+    info: {
+      open: "О персонаже",
+      close: "Закрыть",
+      title: "О персонаже",
+      age: "Возраст",
+      sex: "Пол",
+      role: "Роль",
+      personality: "Характер",
+      backstory: "Предыстория",
+    },
   },
   systemChat: {
     title: "Игровой ассистент",
