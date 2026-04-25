@@ -85,8 +85,14 @@ export function TimeChanger() {
 
   function applyPreset(preset: Preset) {
     const base = timeOverride ? new Date(timeOverride) : new Date()
-    base.setHours(preset.hour, preset.minute, 0, 0)
-    setTimeOverride(base.toISOString())
+    const target = new Date(base)
+    target.setHours(preset.hour, preset.minute, 0, 0)
+    // Presets always advance time. If the chosen preset would land before the
+    // current effective time on the same day, jump to the next day instead.
+    if (target.getTime() < base.getTime()) {
+      target.setDate(target.getDate() + 1)
+    }
+    setTimeOverride(target.toISOString())
   }
 
   const activePreset = timeOverride
