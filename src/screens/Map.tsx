@@ -139,7 +139,7 @@ export default function MapScreen() {
                 onClick={() => handleClickNode(loc.id)}
                 disabled={Boolean(walkingTo)}
                 className={cn(
-                  'absolute -translate-x-1/2 -translate-y-1/2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border backdrop-blur-md transition-colors text-left max-w-[120px] sm:max-w-[180px]',
+                  'absolute px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border backdrop-blur-md transition-colors text-left max-w-[120px] sm:max-w-[180px]',
                   isCurrent
                     ? 'bg-city-accent text-slate-900 border-city-accent shadow-[0_0_40px_-8px_rgba(245,177,76,0.9)]'
                     : 'bg-city-panel/80 border-white/10 hover:border-city-accent/60 hover:text-city-accent',
@@ -147,6 +147,8 @@ export default function MapScreen() {
                 style={{
                   left: `${pos.x * 100}%`,
                   top: `${pos.y * 100}%`,
+                  translateX: '-50%',
+                  translateY: '-50%',
                 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
