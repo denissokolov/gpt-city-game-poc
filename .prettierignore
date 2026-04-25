@@ -1,0 +1,7 @@
+node_modules
+dist
+dist-ssr
+.vite
+*.tsbuildinfo
+package-lock.json
+src/api/openapi.d.ts
