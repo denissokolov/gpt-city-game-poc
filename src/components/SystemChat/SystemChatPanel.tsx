@@ -322,6 +322,9 @@ function SystemChatConversation({
       // The chat title is auto-generated from the first user message, so
       // refresh the list to pick up new titles and updatedAt order.
       void queryClient.invalidateQueries({ queryKey: ['system-chats', userId] })
+      // The assistant can run the update-user tool to modify the player's
+      // profile, so keep the current-user cache in sync after every turn.
+      void queryClient.invalidateQueries({ queryKey: ['current-user'] })
     },
     onError: (err) => {
       if (isStaleChatError(err)) {
