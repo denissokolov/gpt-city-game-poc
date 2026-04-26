@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   apiFetch,
+  ApiError,
   type AvatarDto,
   type CreateAvatarDto,
   type UpdateAvatarDto,
@@ -27,14 +29,30 @@ export function getCurrentAvatar(avatarId: string) {
   })
 }
 
+function isGoneError(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 404 || err.status === 403)
+}
+
 // Fetches the persisted avatar's profile from the backend. Profile data is no
 // longer mirrored in localStorage — only the avatar id is — so consumers that
 // need the name / title / etc. read it from the server via this hook.
+//
+// If the server returns 404/403 (avatar deleted or inaccessible), the local
+// session is cleared so the user is redirected to onboarding.
 export function useCurrentAvatar() {
   const avatarId = useGameStore((s) => s.avatarId)
-  return useQuery({
+  const clearAvatar = useGameStore((s) => s.clearAvatar)
+
+  const query = useQuery({
     queryKey: ['current-avatar', avatarId],
     enabled: Boolean(avatarId),
     queryFn: () => getCurrentAvatar(avatarId as string),
+    retry: (failureCount, err) => !isGoneError(err) && failureCount < 3,
   })
+
+  useEffect(() => {
+    if (isGoneError(query.error)) clearAvatar()
+  }, [query.error, clearAvatar])
+
+  return query
 }
