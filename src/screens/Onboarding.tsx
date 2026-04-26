@@ -8,8 +8,8 @@ import {
   type AvatarStyle,
 } from '@/game/avatars'
 import { useGameStore, type PlayerSex } from '@/game/store'
-import { createUser, updateUser, useCurrentUser } from '@/api/users'
-import type { UserDto } from '@/api/client'
+import { createAvatar, updateAvatar, useCurrentAvatar } from '@/api/avatars'
+import type { AvatarDto } from '@/api/client'
 import { toastError } from '@/components/Toaster'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Skeleton } from '@/components/Skeleton'
@@ -23,16 +23,16 @@ function randomSeed() {
 const SEX_ORDER: PlayerSex[] = ['female', 'male', 'non_binary']
 
 export default function OnboardingScreen() {
-  const userId = useGameStore((s) => s.userId)
+  const avatarId = useGameStore((s) => s.avatarId)
   const storedAvatarStyle = useGameStore((s) => s.avatarStyle)
   const storedAvatarSeed = useGameStore((s) => s.avatarSeed)
 
-  const isEditing = userId !== null
+  const isEditing = avatarId !== null
 
   // When editing, wait for the existing profile to arrive before mounting the
   // form so its initial state can be derived from props (no setState in
   // effects required to backfill fields).
-  const { data: existing, isLoading } = useCurrentUser()
+  const { data: existing, isLoading } = useCurrentAvatar()
 
   if (isEditing && isLoading && !existing) {
     return <OnboardingSkeleton />
@@ -62,7 +62,7 @@ function OnboardingSkeleton() {
 }
 
 interface OnboardingFormProps {
-  existing: UserDto | null
+  existing: AvatarDto | null
   defaultAvatarStyle: AvatarStyle
   defaultAvatarSeed: string
 }
@@ -75,8 +75,8 @@ function OnboardingForm({
   const t = useT()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const setUser = useGameStore((s) => s.setUser)
-  const clearUser = useGameStore((s) => s.clearUser)
+  const setAvatar = useGameStore((s) => s.setAvatar)
+  const clearAvatar = useGameStore((s) => s.clearAvatar)
 
   const [firstName, setFirstName] = useState(existing?.firstName ?? '')
   const [lastName, setLastName] = useState(existing?.lastName ?? '')
@@ -98,18 +98,18 @@ function OnboardingForm({
     title.trim().length >= 2 &&
     backstory.trim().length >= 10
 
-  const createUserMutation = useMutation({
-    mutationFn: createUser,
+  const createAvatarMutation = useMutation({
+    mutationFn: createAvatar,
     onError: (err) => toastError(err),
   })
-  const updateUserMutation = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: Parameters<typeof updateUser>[1] }) =>
-      updateUser(id, body),
+  const updateAvatarMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Parameters<typeof updateAvatar>[1] }) =>
+      updateAvatar(id, body),
     onError: (err) => toastError(err),
   })
 
   const isSubmitting =
-    createUserMutation.isPending || updateUserMutation.isPending
+    createAvatarMutation.isPending || updateAvatarMutation.isPending
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -125,14 +125,14 @@ function OnboardingForm({
     }
 
     try {
-      const user = existing
-        ? await updateUserMutation.mutateAsync({ id: existing.id, body })
-        : await createUserMutation.mutateAsync(body)
+      const avatar = existing
+        ? await updateAvatarMutation.mutateAsync({ id: existing.id, body })
+        : await createAvatarMutation.mutateAsync(body)
       // Seed the React Query cache so the next screen doesn't have to
       // re-fetch the profile we already have in hand.
-      queryClient.setQueryData(['current-user', user.id], user)
-      setUser({
-        id: user.id,
+      queryClient.setQueryData(['current-avatar', avatar.id], avatar)
+      setAvatar({
+        id: avatar.id,
         avatarStyle: style,
         avatarSeed: seed,
       })
@@ -143,8 +143,8 @@ function OnboardingForm({
   }
 
   function handleStartOver() {
-    clearUser()
-    queryClient.removeQueries({ queryKey: ['current-user'] })
+    clearAvatar()
+    queryClient.removeQueries({ queryKey: ['current-avatar'] })
     setFirstName('')
     setLastName('')
     setAge(30)

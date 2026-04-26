@@ -13,7 +13,7 @@ import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
 interface SystemChatHistoryListProps {
-  userId: string
+  avatarId: string
   currentChatId: string | null
   onSelect: (id: string) => void
   onCreated: (id: string) => void
@@ -27,7 +27,7 @@ function chatTitle(chat: SystemChatDto): string | null {
 }
 
 export default function SystemChatHistoryList({
-  userId,
+  avatarId,
   currentChatId,
   onSelect,
   onCreated,
@@ -37,18 +37,20 @@ export default function SystemChatHistoryList({
   const queryClient = useQueryClient()
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
-  const chatsQuery = useSystemChats(userId)
+  const chatsQuery = useSystemChats(avatarId)
 
   const createMutation = useMutation({
-    mutationFn: (uid: string) => createSystemChat(uid),
+    mutationFn: (id: string) => createSystemChat(id),
     onSuccess: (chat) => {
-      void queryClient.invalidateQueries({ queryKey: ['system-chats', userId] })
+      void queryClient.invalidateQueries({
+        queryKey: ['system-chats', avatarId],
+      })
       onCreated(chat.id)
     },
     onError: (err) => toastError(err),
   })
 
-  const deleteMutation = useDeleteSystemChat(userId)
+  const deleteMutation = useDeleteSystemChat(avatarId)
   const isDeleting = deleteMutation.isPending
 
   const sortedChats = useMemo(() => {
@@ -76,7 +78,7 @@ export default function SystemChatHistoryList({
             type="button"
             onClick={() => {
               if (createMutation.isPending) return
-              createMutation.mutate(userId)
+              createMutation.mutate(avatarId)
             }}
             disabled={createMutation.isPending}
             className="flex w-full items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-3 py-2.5 text-sm font-medium text-city-ink transition-colors hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-60"

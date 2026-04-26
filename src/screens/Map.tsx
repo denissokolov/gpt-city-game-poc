@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocations } from '@/api/locations'
-import { useCurrentUser } from '@/api/users'
+import { useCurrentAvatar } from '@/api/avatars'
 import { useGameStore } from '@/game/store'
 import { getLocationPosition } from '@/game/cityLayout'
 import { avatarUrl } from '@/game/avatars'
@@ -15,13 +15,13 @@ import { cn } from '@/lib/cn'
 export default function MapScreen() {
   const t = useT()
   const navigate = useNavigate()
-  const userId = useGameStore((s) => s.userId)
+  const avatarId = useGameStore((s) => s.avatarId)
   const avatarStyle = useGameStore((s) => s.avatarStyle)
   const avatarSeed = useGameStore((s) => s.avatarSeed)
   const currentLocationId = useGameStore((s) => s.currentLocationId)
   const setCurrentLocation = useGameStore((s) => s.setCurrentLocation)
 
-  const { data: player } = useCurrentUser()
+  const { data: player } = useCurrentAvatar()
   const { data: locations, isLoading, error } = useLocations()
 
   const [walkingTo, setWalkingTo] = useState<string | null>(null)
@@ -67,7 +67,7 @@ export default function MapScreen() {
     setTimeout(() => navigate(`/location/${target}`), 150)
   }
 
-  if (!userId || !avatarStyle || !avatarSeed) return null
+  if (!avatarId || !avatarStyle || !avatarSeed) return null
 
   return (
     <div className="min-h-dvh p-3 sm:p-8">

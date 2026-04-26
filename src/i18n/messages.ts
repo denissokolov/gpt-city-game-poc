@@ -251,8 +251,8 @@ const en: Messages = {
       "create-place": "Create place",
       "update-place": "Update place",
       "delete-place": "Delete place",
-      "update-user": "Update user profile",
-      "clear-user-history": "Clear user history",
+      "update-avatar": "Update avatar profile",
+      "clear-avatar-history": "Clear avatar history",
     },
   },
   loading: {
@@ -424,8 +424,8 @@ const ru: Messages = {
       "create-place": "Создать место",
       "update-place": "Обновить место",
       "delete-place": "Удалить место",
-      "update-user": "Обновить профиль пользователя",
-      "clear-user-history": "Очистить историю пользователя",
+      "update-avatar": "Обновить профиль аватара",
+      "clear-avatar-history": "Очистить историю аватара",
     },
   },
   loading: {

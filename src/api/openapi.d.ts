@@ -21,6 +21,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/avatars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new avatar */
+        post: operations["AvatarsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/avatars/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the current avatar */
+        get: operations["AvatarsController_findCurrent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/avatars/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update an existing avatar profile */
+        patch: operations["AvatarsController_update"];
+        trace?: never;
+    };
     "/characters": {
         parameters: {
             query?: never;
@@ -109,57 +160,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a new user */
-        post: operations["UsersController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get the current user */
-        get: operations["UsersController_findCurrent"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update an existing user profile */
-        patch: operations["UsersController_update"];
-        trace?: never;
-    };
     "/system-chats": {
         parameters: {
             query?: never;
@@ -167,10 +167,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List system chats owned by the current user */
+        /** List system chats owned by the current avatar */
         get: operations["SystemChatsController_list"];
         put?: never;
-        /** Create a new system chat for the current user. The title is auto-generated from the first user message. */
+        /** Create a new system chat for the current avatar. The title is auto-generated from the first message. */
         post: operations["SystemChatsController_create"];
         delete?: never;
         options?: never;
@@ -188,7 +188,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete a system chat owned by the current user */
+        /** Delete a system chat owned by the current avatar */
         delete: operations["SystemChatsController_remove"];
         options?: never;
         head?: never;
@@ -238,6 +238,110 @@ export interface components {
              * @example ok
              */
             database: string;
+        };
+        CreateAvatarDto: {
+            /**
+             * @description First name of the avatar
+             * @example Ada
+             */
+            firstName: string;
+            /**
+             * @description Last name of the avatar
+             * @example Lovelace
+             */
+            lastName: string;
+            /**
+             * @description Age of the avatar in years
+             * @example 36
+             */
+            age: number;
+            /**
+             * @description Sex of the avatar
+             * @example female
+             * @enum {string}
+             */
+            sex: "male" | "female" | "non_binary";
+            /**
+             * @description Title or role of the avatar in the city
+             * @example Mathematician
+             */
+            title: string;
+            /**
+             * @description Backstory of the avatar — where they came from and what shaped them
+             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
+             */
+            backstory: string;
+        };
+        AvatarDto: {
+            /**
+             * @description Unique identifier of the avatar
+             * @example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+             */
+            id: string;
+            /**
+             * @description First name of the avatar
+             * @example Ada
+             */
+            firstName: string;
+            /**
+             * @description Last name of the avatar
+             * @example Lovelace
+             */
+            lastName: string;
+            /**
+             * @description Age of the avatar in years
+             * @example 36
+             */
+            age: number;
+            /**
+             * @description Sex of the avatar
+             * @example female
+             * @enum {string}
+             */
+            sex: "male" | "female" | "non_binary";
+            /**
+             * @description Title or role of the avatar in the city
+             * @example Mathematician
+             */
+            title: string;
+            /**
+             * @description Backstory of the avatar — where they came from and what shaped them
+             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
+             */
+            backstory: string;
+        };
+        UpdateAvatarDto: {
+            /**
+             * @description New first name of the avatar
+             * @example Ada
+             */
+            firstName?: string;
+            /**
+             * @description New last name of the avatar
+             * @example Lovelace
+             */
+            lastName?: string;
+            /**
+             * @description New age of the avatar in years
+             * @example 36
+             */
+            age?: number;
+            /**
+             * @description New sex of the avatar
+             * @example female
+             * @enum {string}
+             */
+            sex?: "male" | "female" | "non_binary";
+            /**
+             * @description New title or role of the avatar in the city
+             * @example Mathematician
+             */
+            title?: string;
+            /**
+             * @description New backstory of the avatar — where they came from and what shaped them
+             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
+             */
+            backstory?: string;
         };
         CharacterDto: {
             /**
@@ -336,10 +440,10 @@ export interface components {
              */
             placeId: string;
             /**
-             * @description ID of the user who owns the chat
+             * @description ID of the avatar who owns the chat
              * @example c3d4e5f6-a7b8-4012-bdef-123456789012
              */
-            userId: string;
+            avatarId: string;
             /**
              * @description ID of the location state snapshot this chat is anchored to
              * @example d4e5f6a7-b8c9-0123-defa-234567890123
@@ -353,12 +457,12 @@ export interface components {
         };
         SendMessageDto: {
             /**
-             * @description The message sent by the user. Either message, activity, or both must be provided.
+             * @description The message sent by the avatar. Either message, activity, or both must be provided.
              * @example Hello, how are you?
              */
             message?: string;
             /**
-             * @description A user activity reported by the client (e.g. silence after some time). Either message, activity, or both must be provided.
+             * @description An avatar activity reported by the client (e.g. silence after some time). Either message, activity, or both must be provided.
              * @example silence
              * @enum {string}
              */
@@ -436,110 +540,6 @@ export interface components {
             /** @description Places within this location, each with the characters currently present there */
             places: components["schemas"]["PlaceStateDto"][];
         };
-        CreateUserDto: {
-            /**
-             * @description First name of the user
-             * @example Ada
-             */
-            firstName: string;
-            /**
-             * @description Last name of the user
-             * @example Lovelace
-             */
-            lastName: string;
-            /**
-             * @description Age of the user in years
-             * @example 36
-             */
-            age: number;
-            /**
-             * @description Sex of the user
-             * @example female
-             * @enum {string}
-             */
-            sex: "male" | "female" | "non_binary";
-            /**
-             * @description Title or role of the user in the city
-             * @example Mathematician
-             */
-            title: string;
-            /**
-             * @description Backstory of the user — where they came from and what shaped them
-             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
-             */
-            backstory: string;
-        };
-        UserDto: {
-            /**
-             * @description Unique identifier of the user
-             * @example a1b2c3d4-e5f6-7890-abcd-ef1234567890
-             */
-            id: string;
-            /**
-             * @description First name of the user
-             * @example Ada
-             */
-            firstName: string;
-            /**
-             * @description Last name of the user
-             * @example Lovelace
-             */
-            lastName: string;
-            /**
-             * @description Age of the user in years
-             * @example 36
-             */
-            age: number;
-            /**
-             * @description Sex of the user
-             * @example female
-             * @enum {string}
-             */
-            sex: "male" | "female" | "non_binary";
-            /**
-             * @description Title or role of the user in the city
-             * @example Mathematician
-             */
-            title: string;
-            /**
-             * @description Backstory of the user — where they came from and what shaped them
-             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
-             */
-            backstory: string;
-        };
-        UpdateUserDto: {
-            /**
-             * @description New first name of the user
-             * @example Ada
-             */
-            firstName?: string;
-            /**
-             * @description New last name of the user
-             * @example Lovelace
-             */
-            lastName?: string;
-            /**
-             * @description New age of the user in years
-             * @example 36
-             */
-            age?: number;
-            /**
-             * @description New sex of the user
-             * @example female
-             * @enum {string}
-             */
-            sex?: "male" | "female" | "non_binary";
-            /**
-             * @description New title or role of the user in the city
-             * @example Mathematician
-             */
-            title?: string;
-            /**
-             * @description New backstory of the user — where they came from and what shaped them
-             * @example Pioneering mathematician who wrote the first algorithm intended for a machine.
-             */
-            backstory?: string;
-        };
         SystemChatDto: {
             /**
              * @description Unique identifier of the system chat
@@ -547,12 +547,12 @@ export interface components {
              */
             id: string;
             /**
-             * @description ID of the user who owns the system chat
+             * @description ID of the avatar who owns the system chat
              * @example c3d4e5f6-a7b8-4012-bdef-123456789012
              */
-            userId: string;
+            avatarId: string;
             /**
-             * @description Human-readable title of the system chat. Auto-generated from the first user message; null until the user sends one.
+             * @description Human-readable title of the system chat. Auto-generated from the first message; null until the avatar sends one.
              * @example Tweak personalities of city characters
              */
             title: Record<string, never> | null;
@@ -581,10 +581,10 @@ export interface components {
              */
             systemChatId: string;
             /**
-             * @description ID of the user who owns the chat this message belongs to
+             * @description ID of the avatar who owns the chat this message belongs to
              * @example c3d4e5f6-a7b8-4012-bdef-123456789012
              */
-            userId: string;
+            avatarId: string;
             /**
              * @description Role of the message author
              * @example user
@@ -605,7 +605,7 @@ export interface components {
         };
         SendSystemMessageDto: {
             /**
-             * @description The message sent by the user to the system assistant
+             * @description The message sent by the avatar to the system assistant
              * @example Please create a new character named Alice, age 30.
              */
             message: string;
@@ -638,6 +638,112 @@ export interface operations {
             };
         };
     };
+    AvatarsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAvatarDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarDto"];
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AvatarsController_findCurrent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarDto"];
+                };
+            };
+            /** @description Missing or invalid x-avatar-id header */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Avatar not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AvatarsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the avatar */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAvatarDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarDto"];
+                };
+            };
+            /** @description Invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Avatar not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     CharactersController_findAll: {
         parameters: {
             query?: never;
@@ -663,8 +769,8 @@ export interface operations {
             header: {
                 /** @description Locale of the user performing the request */
                 "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path?: never;
             cookie?: never;
@@ -698,8 +804,8 @@ export interface operations {
             header: {
                 /** @description Locale of the user performing the request */
                 "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path: {
                 id: string;
@@ -779,118 +885,12 @@ export interface operations {
             };
         };
     };
-    UsersController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateUserDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"];
-                };
-            };
-            /** @description Invalid request body */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    UsersController_findCurrent: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"];
-                };
-            };
-            /** @description Missing or invalid x-user-id header */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    UsersController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Unique identifier of the user */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateUserDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserDto"];
-                };
-            };
-            /** @description Invalid request body */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     SystemChatsController_list: {
         parameters: {
             query?: never;
             header: {
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path?: never;
             cookie?: never;
@@ -911,8 +911,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path?: never;
             cookie?: never;
@@ -933,8 +933,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path: {
                 id: string;
@@ -950,7 +950,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description User does not own the chat */
+            /** @description Avatar does not own the chat */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -970,8 +970,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path: {
                 id: string;
@@ -988,7 +988,7 @@ export interface operations {
                     "application/json": components["schemas"]["SystemMessageDto"][];
                 };
             };
-            /** @description User does not own the chat */
+            /** @description Avatar does not own the chat */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1008,8 +1008,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description ID of the user performing the request */
-                "x-user-id": string;
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
                 /** @description Locale of the user performing the request */
                 "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
             };
@@ -1039,7 +1039,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description User does not own the chat */
+            /** @description Avatar does not own the chat */
             403: {
                 headers: {
                     [name: string]: unknown;

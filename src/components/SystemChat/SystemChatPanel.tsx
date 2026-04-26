@@ -126,7 +126,7 @@ interface SystemChatPanelProps {
 
 export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
   const t = useT()
-  const userId = useGameStore((s) => s.userId)
+  const avatarId = useGameStore((s) => s.avatarId)
   const systemChatId = useGameStore((s) => s.systemChatId)
   const setSystemChatId = useGameStore((s) => s.setSystemChatId)
   const forgetSystemChatId = useGameStore((s) => s.forgetSystemChatId)
@@ -136,16 +136,16 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
   const queryClient = useQueryClient()
 
   const ensureMutation = useMutation({
-    mutationFn: (uid: string) => createSystemChat(uid),
+    mutationFn: (id: string) => createSystemChat(id),
     onSuccess: (chat) => setSystemChatId(chat.id),
     onError: (err) => toastError(err),
   })
 
   const newChatMutation = useMutation({
-    mutationFn: (uid: string) => createSystemChat(uid),
+    mutationFn: (id: string) => createSystemChat(id),
     onSuccess: (chat) => {
       void queryClient.invalidateQueries({
-        queryKey: ['system-chats', userId],
+        queryKey: ['system-chats', avatarId],
       })
       setSystemChatId(chat.id)
       setView('chat')
@@ -155,23 +155,23 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
 
   // Eagerly create a system chat on first open so we can show any prior
   // history immediately. We guard against repeated calls by tracking the
-  // userId we last attempted for.
+  // avatarId we last attempted for.
   const lastAttemptedFor = useRef<string | null>(null)
   useEffect(() => {
-    if (!userId) return
+    if (!avatarId) return
     if (systemChatId) {
-      lastAttemptedFor.current = userId
+      lastAttemptedFor.current = avatarId
       return
     }
-    if (lastAttemptedFor.current === userId) return
+    if (lastAttemptedFor.current === avatarId) return
     if (ensureMutation.isPending) return
-    lastAttemptedFor.current = userId
-    ensureMutation.mutate(userId)
-  }, [userId, systemChatId, ensureMutation])
+    lastAttemptedFor.current = avatarId
+    ensureMutation.mutate(avatarId)
+  }, [avatarId, systemChatId, ensureMutation])
 
-  const messagesQuery = useSystemMessages(systemChatId, userId)
+  const messagesQuery = useSystemMessages(systemChatId, avatarId)
 
-  const isReady = Boolean(userId && systemChatId && messagesQuery.isSuccess)
+  const isReady = Boolean(avatarId && systemChatId && messagesQuery.isSuccess)
 
   const initialMessages = useMemo<UIMessage[]>(
     () => (messagesQuery.data ?? []).map(dtoToUIMessage),
@@ -191,14 +191,14 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
           <p className="font-display font-semibold leading-tight">{t.systemChat.title}</p>
           <p className="truncate text-xs text-city-muted">{t.systemChat.subtitle}</p>
         </div>
-        {userId && (
+        {avatarId && (
           <>
             <button
               type="button"
               className="btn-ghost ml-auto inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0"
               onClick={() => {
                 if (newChatMutation.isPending) return
-                newChatMutation.mutate(userId)
+                newChatMutation.mutate(avatarId)
               }}
               disabled={newChatMutation.isPending}
               aria-label={t.systemChat.newChat}
@@ -226,7 +226,7 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
           type="button"
           className={cn(
             'btn-ghost inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0',
-            !userId && 'ml-auto',
+            !avatarId && 'ml-auto',
           )}
           aria-label={t.systemChat.close}
           onClick={onClose}
@@ -235,9 +235,9 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
         </button>
       </header>
 
-      {inHistory && userId ? (
+      {inHistory && avatarId ? (
         <SystemChatHistoryList
-          userId={userId}
+          avatarId={avatarId}
           currentChatId={systemChatId}
           onSelect={(id) => {
             setSystemChatId(id)
@@ -248,11 +248,11 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
             setView('chat')
           }}
         />
-      ) : isReady && systemChatId && userId ? (
+      ) : isReady && systemChatId && avatarId ? (
         <SystemChatConversation
           key={systemChatId}
           chatId={systemChatId}
-          userId={userId}
+          avatarId={avatarId}
           initialMessages={initialMessages}
           onStaleChat={() => {
             forgetSystemChatId()
@@ -274,14 +274,14 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
 
 interface SystemChatConversationProps {
   chatId: string
-  userId: string
+  avatarId: string
   initialMessages: UIMessage[]
   onStaleChat: () => void
 }
 
 function SystemChatConversation({
   chatId,
-  userId,
+  avatarId,
   initialMessages,
   onStaleChat,
 }: SystemChatConversationProps) {
@@ -295,14 +295,14 @@ function SystemChatConversation({
     () =>
       new DefaultChatTransport<UIMessage>({
         api: `${API_BASE_URL}/system-chats/${encodeURIComponent(chatId)}/messages`,
-        headers: { 'x-user-id': userId, 'x-locale': uiLanguage },
+        headers: { 'x-avatar-id': avatarId, 'x-locale': uiLanguage },
         prepareSendMessagesRequest: ({ messages }) => {
           const last = messages[messages.length - 1]
           const message = last ? partsToText(last) : ''
           return { body: { message } }
         },
       }),
-    [chatId, userId, uiLanguage],
+    [chatId, avatarId, uiLanguage],
   )
 
   const { messages, sendMessage, status, error } = useChat({
@@ -321,10 +321,12 @@ function SystemChatConversation({
       })
       // The chat title is auto-generated from the first user message, so
       // refresh the list to pick up new titles and updatedAt order.
-      void queryClient.invalidateQueries({ queryKey: ['system-chats', userId] })
-      // The assistant can run the update-user tool to modify the player's
-      // profile, so keep the current-user cache in sync after every turn.
-      void queryClient.invalidateQueries({ queryKey: ['current-user'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['system-chats', avatarId],
+      })
+      // The assistant can run the update-avatar tool to modify the player's
+      // profile, so keep the current-avatar cache in sync after every turn.
+      void queryClient.invalidateQueries({ queryKey: ['current-avatar'] })
     },
     onError: (err) => {
       if (isStaleChatError(err)) {

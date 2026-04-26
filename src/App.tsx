@@ -13,8 +13,8 @@ const SystemChatLauncher = lazy(
 )
 
 function RequirePlayer({ children }: { children: React.ReactNode }) {
-  const userId = useGameStore((s) => s.userId)
-  if (!userId) return <Navigate to="/onboarding" replace />
+  const avatarId = useGameStore((s) => s.avatarId)
+  if (!avatarId) return <Navigate to="/onboarding" replace />
   return <>{children}</>
 }
 

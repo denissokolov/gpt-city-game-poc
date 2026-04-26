@@ -17,7 +17,7 @@ export default function LocationScreen() {
   const t = useT()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const userId = useGameStore((s) => s.userId)
+  const avatarId = useGameStore((s) => s.avatarId)
   const setCurrentLocation = useGameStore((s) => s.setCurrentLocation)
 
   const { data: location, isLoading, error } = useLocationState(id)
@@ -33,16 +33,16 @@ export default function LocationScreen() {
   const createChatMutation = useMutation({
     mutationFn: ({
       body,
-      userId,
+      avatarId,
     }: {
       body: Parameters<typeof createChat>[0]
-      userId: string
-    }) => createChat(body, userId),
+      avatarId: string
+    }) => createChat(body, avatarId),
     onError: (err) => toastError(err),
   })
 
   async function openChat(character: CharacterDto, place: PlaceStateDto) {
-    if (!userId || !location) return
+    if (!avatarId || !location) return
     // Always start a fresh conversation: each tap on a character spawns a new
     // chat instead of resuming the previous one for this character/place.
     // `stateId` anchors the chat to the snapshot we're currently looking at
@@ -53,7 +53,7 @@ export default function LocationScreen() {
         placeId: place.id,
         stateId: location.stateId,
       },
-      userId,
+      avatarId,
     })
     navigate(`/chat/${chat.id}?placeId=${place.id}&characterId=${character.id}`)
   }
