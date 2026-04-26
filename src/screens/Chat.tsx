@@ -13,6 +13,8 @@ import StreamingText from '@/components/StreamingText'
 import { useT, type Messages } from '@/i18n'
 import { cn } from '@/lib/cn'
 
+const SILENCE_IDLE_MS = 30_000
+
 function partsToText(msg: UIMessage): string {
   return msg.parts
     .filter(
@@ -74,7 +76,10 @@ export default function ChatScreen() {
     return new DefaultChatTransport<UIMessage>({
       api: `${API_BASE_URL}/chats/${encodeURIComponent(chatId)}/message`,
       headers: { 'x-user-id': userId, 'x-locale': uiLanguage },
-      prepareSendMessagesRequest: ({ messages }) => {
+      prepareSendMessagesRequest: ({ messages, body }) => {
+        if (body && (body as { activity?: unknown }).activity === 'silence') {
+          return { body: { activity: 'silence' } }
+        }
         const last = messages[messages.length - 1]
         const message = last ? partsToText(last) : ''
         return { body: { message } }
@@ -113,6 +118,7 @@ export default function ChatScreen() {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const silenceFiredRef = useRef(false)
 
   useEffect(() => {
     if (!infoOpen) return
@@ -141,6 +147,31 @@ export default function ChatScreen() {
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight + 2}px`
   }, [input])
+
+  // Reset the silence gate on any user-initiated input change (including the
+  // implicit clear after a send) so the next idle window can fire again.
+  useEffect(() => {
+    silenceFiredRef.current = false
+  }, [input])
+
+  // After SILENCE_IDLE_MS of quiet — empty input, idle stream, and at least
+  // one prior message — fire one `activity: 'silence'` to let the AI react.
+  // The gate prevents loops if the AI's silence reply comes back without any
+  // user activity in between.
+  useEffect(() => {
+    if (!chatId) return
+    if (status === 'streaming' || status === 'submitted') return
+    if (input.trim().length > 0) return
+    if (messages.length === 0) return
+    if (silenceFiredRef.current) return
+
+    const timer = window.setTimeout(() => {
+      silenceFiredRef.current = true
+      void sendMessage(undefined, { body: { activity: 'silence' } })
+    }, SILENCE_IDLE_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [chatId, status, input, messages.length, sendMessage])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

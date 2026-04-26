@@ -326,10 +326,16 @@ export interface components {
         };
         SendMessageDto: {
             /**
-             * @description The message sent by the user
+             * @description The message sent by the user. Either message, activity, or both must be provided.
              * @example Hello, how are you?
              */
-            message: string;
+            message?: string;
+            /**
+             * @description A user activity reported by the client (e.g. silence after some time). Either message, activity, or both must be provided.
+             * @example silence
+             * @enum {string}
+             */
+            activity?: "silence";
         };
         LocationDto: {
             /**
