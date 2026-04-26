@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocationState } from '@/api/locations'
 import { useCharacters } from '@/api/characters'
 import { useCurrentAvatar } from '@/api/avatars'
+import { coerceChatSilenceIdleMs } from '@/api/chats'
 import { API_BASE_URL, type CharacterDto } from '@/api/client'
 import { useGameStore, type PlayerSex } from '@/game/store'
 import { avatarUrl, npcAvatarUrl } from '@/game/avatars'
@@ -13,8 +19,6 @@ import { toastError } from '@/components/Toaster'
 import StreamingText from '@/components/StreamingText'
 import { useT, type Messages } from '@/i18n'
 import { cn } from '@/lib/cn'
-
-const SILENCE_IDLE_MS = 30_000
 
 function partsToText(msg: UIMessage): string {
   return msg.parts
@@ -45,6 +49,7 @@ function TypingDots({ label }: { label: string }) {
 export default function ChatScreen() {
   const t = useT()
   const navigate = useNavigate()
+  const routeLocation = useLocation()
   const { chatId } = useParams<{ chatId: string }>()
   const [searchParams] = useSearchParams()
   const placeId = searchParams.get('placeId') ?? undefined
@@ -65,6 +70,15 @@ export default function ChatScreen() {
     if (!placeId || !location) return undefined
     return location.places.find((p) => p.id === placeId)
   }, [placeId, location])
+
+  const silenceIdleMs = useMemo(
+    () =>
+      coerceChatSilenceIdleMs(
+        (routeLocation.state as { silenceIdleMs?: unknown } | null)
+          ?.silenceIdleMs,
+      ),
+    [routeLocation.state],
+  )
 
   const character = useMemo(() => {
     if (!characterId) return undefined
@@ -161,12 +175,13 @@ export default function ChatScreen() {
     silenceFiredRef.current = false
   }, [input])
 
-  // After SILENCE_IDLE_MS of quiet — empty input, idle stream, and at least
-  // one prior message — fire one `activity: 'silence'` to let the AI react.
+  // After `silenceIdleMs` from the create-chat response — empty input, idle
+  // stream, and at least one prior message — fire one `activity: 'silence'`.
+  // Omit when the server did not configure silence (no timer / no events).
   // The gate prevents loops if the AI's silence reply comes back without any
   // user activity in between.
   useEffect(() => {
-    if (!chatId) return
+    if (!chatId || silenceIdleMs === undefined) return
     if (status === 'streaming' || status === 'submitted') return
     if (input.trim().length > 0) return
     if (messages.length === 0) return
@@ -175,10 +190,10 @@ export default function ChatScreen() {
     const timer = window.setTimeout(() => {
       silenceFiredRef.current = true
       void sendMessage(undefined, { body: { activity: 'silence' } })
-    }, SILENCE_IDLE_MS)
+    }, silenceIdleMs)
 
     return () => window.clearTimeout(timer)
-  }, [chatId, status, input, messages.length, sendMessage])
+  }, [chatId, silenceIdleMs, status, input, messages.length, sendMessage])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

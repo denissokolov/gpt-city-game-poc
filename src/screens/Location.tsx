@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useLocationState } from '@/api/locations'
-import { createChat } from '@/api/chats'
+import { coerceChatSilenceIdleMs, createChat } from '@/api/chats'
 import { useGameStore } from '@/game/store'
 import { NpcCard } from '@/components/NpcCard'
 import { LocationLoading } from '@/components/LocationLoading'
@@ -55,7 +55,11 @@ export default function LocationScreen() {
       },
       avatarId,
     })
-    navigate(`/chat/${chat.id}?placeId=${place.id}&characterId=${character.id}`)
+    const silenceIdleMs = coerceChatSilenceIdleMs(chat.silenceIdleMs as unknown)
+    navigate(`/chat/${chat.id}?placeId=${place.id}&characterId=${character.id}`, {
+      state:
+        silenceIdleMs !== undefined ? { silenceIdleMs } : undefined,
+    })
   }
 
   const totalCharacters =

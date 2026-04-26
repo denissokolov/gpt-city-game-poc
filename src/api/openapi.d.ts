@@ -587,6 +587,11 @@ export interface components {
              * @example Discussed the weather and weekend plans.
              */
             summary: Record<string, never> | null;
+            /**
+             * @description Setting for sending silence activity
+             * @example 30000
+             */
+            silenceIdleMs: Record<string, never> | null;
         };
         SendMessageDto: {
             /**
