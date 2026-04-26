@@ -5,6 +5,7 @@ import { DefaultChatTransport, type UIMessage } from 'ai'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocationState } from '@/api/locations'
 import { useCharacters } from '@/api/characters'
+import { useCurrentUser } from '@/api/users'
 import { API_BASE_URL, type CharacterDto } from '@/api/client'
 import { useGameStore, type PlayerSex } from '@/game/store'
 import { avatarUrl, npcAvatarUrl } from '@/game/avatars'
@@ -49,10 +50,13 @@ export default function ChatScreen() {
   const placeId = searchParams.get('placeId') ?? undefined
   const characterId = searchParams.get('characterId') ?? undefined
 
-  const player = useGameStore((s) => s.player)
+  const userId = useGameStore((s) => s.userId)
+  const avatarStyle = useGameStore((s) => s.avatarStyle)
+  const avatarSeed = useGameStore((s) => s.avatarSeed)
   const currentLocationId = useGameStore((s) => s.currentLocationId)
   const uiLanguage = useGameStore((s) => s.uiLanguage)
 
+  const { data: player } = useCurrentUser()
   const { data: location } = useLocationState(currentLocationId ?? undefined)
   const { data: allCharacters } = useCharacters()
 
@@ -68,8 +72,6 @@ export default function ChatScreen() {
       .find((c) => c.id === characterId)
     return fromPlace ?? allCharacters?.find((c) => c.id === characterId)
   }, [characterId, location, allCharacters])
-
-  const userId = player?.id
 
   const transport = useMemo(() => {
     if (!chatId || !userId) return undefined
@@ -181,7 +183,7 @@ export default function ChatScreen() {
     void sendMessage({ text })
   }
 
-  if (!player) return null
+  if (!userId || !avatarStyle || !avatarSeed) return null
 
   const isStreaming = status === 'streaming' || status === 'submitted'
 
@@ -283,8 +285,8 @@ export default function ChatScreen() {
                   </div>
                   {isUser && (
                     <img
-                      src={avatarUrl(player.avatarStyle, player.avatarSeed, 64)}
-                      alt=""
+                      src={avatarUrl(avatarStyle, avatarSeed, 64)}
+                      alt={player ? `${player.firstName} ${player.lastName}` : ''}
                       className="h-8 w-8 rounded-full border border-white/10 shrink-0"
                     />
                   )}

@@ -36,8 +36,6 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     headers.set('Content-Type', 'application/json')
   }
 
-  console.log(useGameStore.getState())
-
   headers.set('Accept', 'application/json')
   // Tell the backend which locale the user is viewing the app in so it can
   // localize generated content. Callers can still override this by passing

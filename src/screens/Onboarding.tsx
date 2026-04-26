@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   avatarUrl,
   PLAYER_AVATAR_STYLES,
   type AvatarStyle,
 } from '@/game/avatars'
 import { useGameStore, type PlayerSex } from '@/game/store'
-import { createUser, updateUser } from '@/api/users'
+import { createUser, updateUser, useCurrentUser } from '@/api/users'
+import type { UserDto } from '@/api/client'
 import { toastError } from '@/components/Toaster'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { Skeleton } from '@/components/Skeleton'
 import { useT } from '@/i18n'
 import { cn } from '@/lib/cn'
 
@@ -21,11 +23,60 @@ function randomSeed() {
 const SEX_ORDER: PlayerSex[] = ['female', 'male', 'non_binary']
 
 export default function OnboardingScreen() {
+  const userId = useGameStore((s) => s.userId)
+  const storedAvatarStyle = useGameStore((s) => s.avatarStyle)
+  const storedAvatarSeed = useGameStore((s) => s.avatarSeed)
+
+  const isEditing = userId !== null
+
+  // When editing, wait for the existing profile to arrive before mounting the
+  // form so its initial state can be derived from props (no setState in
+  // effects required to backfill fields).
+  const { data: existing, isLoading } = useCurrentUser()
+
+  if (isEditing && isLoading && !existing) {
+    return <OnboardingSkeleton />
+  }
+
+  return (
+    <OnboardingForm
+      existing={existing ?? null}
+      defaultAvatarStyle={storedAvatarStyle ?? 'adventurer'}
+      defaultAvatarSeed={storedAvatarSeed ?? randomSeed()}
+    />
+  )
+}
+
+function OnboardingSkeleton() {
+  return (
+    <div className="min-h-dvh grid place-items-center p-4 sm:p-8">
+      <div className="card w-full max-w-2xl space-y-4 p-6 sm:p-8">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-40 rounded-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    </div>
+  )
+}
+
+interface OnboardingFormProps {
+  existing: UserDto | null
+  defaultAvatarStyle: AvatarStyle
+  defaultAvatarSeed: string
+}
+
+function OnboardingForm({
+  existing,
+  defaultAvatarStyle,
+  defaultAvatarSeed,
+}: OnboardingFormProps) {
   const t = useT()
   const navigate = useNavigate()
-  const existing = useGameStore((s) => s.player)
-  const setPlayer = useGameStore((s) => s.setPlayer)
-  const clearPlayer = useGameStore((s) => s.clearPlayer)
+  const queryClient = useQueryClient()
+  const setUser = useGameStore((s) => s.setUser)
+  const clearUser = useGameStore((s) => s.clearUser)
 
   const [firstName, setFirstName] = useState(existing?.firstName ?? '')
   const [lastName, setLastName] = useState(existing?.lastName ?? '')
@@ -33,10 +84,8 @@ export default function OnboardingScreen() {
   const [sex, setSex] = useState<PlayerSex>(existing?.sex ?? 'non_binary')
   const [title, setTitle] = useState(existing?.title ?? '')
   const [backstory, setBackstory] = useState(existing?.backstory ?? '')
-  const [seed, setSeed] = useState(existing?.avatarSeed ?? randomSeed())
-  const [style, setStyle] = useState<AvatarStyle>(
-    existing?.avatarStyle ?? 'adventurer',
-  )
+  const [seed, setSeed] = useState(defaultAvatarSeed)
+  const [style, setStyle] = useState<AvatarStyle>(defaultAvatarStyle)
   const [confirmStartOver, setConfirmStartOver] = useState(false)
 
   const isEditing = existing !== null
@@ -79,14 +128,11 @@ export default function OnboardingScreen() {
       const user = existing
         ? await updateUserMutation.mutateAsync({ id: existing.id, body })
         : await createUserMutation.mutateAsync(body)
-      setPlayer({
+      // Seed the React Query cache so the next screen doesn't have to
+      // re-fetch the profile we already have in hand.
+      queryClient.setQueryData(['current-user', user.id], user)
+      setUser({
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        age: user.age,
-        sex: user.sex,
-        title: user.title,
-        backstory: user.backstory,
         avatarStyle: style,
         avatarSeed: seed,
       })
@@ -97,7 +143,8 @@ export default function OnboardingScreen() {
   }
 
   function handleStartOver() {
-    clearPlayer()
+    clearUser()
+    queryClient.removeQueries({ queryKey: ['current-user'] })
     setFirstName('')
     setLastName('')
     setAge(30)

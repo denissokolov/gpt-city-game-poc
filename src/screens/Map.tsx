@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocations } from '@/api/locations'
+import { useCurrentUser } from '@/api/users'
 import { useGameStore } from '@/game/store'
 import { getLocationPosition } from '@/game/cityLayout'
 import { avatarUrl } from '@/game/avatars'
@@ -14,10 +15,13 @@ import { cn } from '@/lib/cn'
 export default function MapScreen() {
   const t = useT()
   const navigate = useNavigate()
-  const player = useGameStore((s) => s.player)
+  const userId = useGameStore((s) => s.userId)
+  const avatarStyle = useGameStore((s) => s.avatarStyle)
+  const avatarSeed = useGameStore((s) => s.avatarSeed)
   const currentLocationId = useGameStore((s) => s.currentLocationId)
   const setCurrentLocation = useGameStore((s) => s.setCurrentLocation)
 
+  const { data: player } = useCurrentUser()
   const { data: locations, isLoading, error } = useLocations()
 
   const [walkingTo, setWalkingTo] = useState<string | null>(null)
@@ -63,21 +67,25 @@ export default function MapScreen() {
     setTimeout(() => navigate(`/location/${target}`), 150)
   }
 
-  if (!player) return null
+  if (!userId || !avatarStyle || !avatarSeed) return null
 
   return (
     <div className="min-h-dvh p-3 sm:p-8">
       <header className="mx-auto max-w-5xl mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <img
-            src={avatarUrl(player.avatarStyle, player.avatarSeed, 64)}
+            src={avatarUrl(avatarStyle, avatarSeed, 64)}
             alt=""
             className="h-10 w-10 shrink-0 rounded-full border border-white/10"
           />
           <div className="min-w-0">
             <p className="text-xs text-city-muted">{t.map.playingAs}</p>
             <p className="font-display font-semibold truncate">
-              {player.firstName} {player.lastName}
+              {player ? (
+                `${player.firstName} ${player.lastName}`
+              ) : (
+                <Skeleton className="h-4 w-32" />
+              )}
             </p>
           </div>
         </div>
@@ -182,8 +190,10 @@ export default function MapScreen() {
               >
                 <div className="relative">
                   <motion.img
-                    src={avatarUrl(player.avatarStyle, player.avatarSeed, 96)}
-                    alt={`${player.firstName} ${player.lastName}`}
+                    src={avatarUrl(avatarStyle, avatarSeed, 96)}
+                    alt={
+                      player ? `${player.firstName} ${player.lastName}` : ''
+                    }
                     className="h-10 w-10 sm:h-14 sm:w-14 rounded-full border-2 border-white shadow-xl bg-white/10"
                     animate={
                       walkingTo

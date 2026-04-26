@@ -10,20 +10,15 @@ export const UI_LANGUAGES: UiLanguage[] = ['en-US', 'ru']
 
 export const DEFAULT_UI_LANGUAGE: UiLanguage = 'en-US'
 
-export type PlayerProfile = {
-  id: string
-  firstName: string
-  lastName: string
-  age: number
-  sex: PlayerSex
-  title: string
-  backstory: string
-  avatarStyle: AvatarStyle
-  avatarSeed: string
-}
-
 type GameState = {
-  player: PlayerProfile | null
+  // Persisted user identity. Profile fields (name, age, etc.) live on the
+  // server and are fetched via `useCurrentUser` instead of being mirrored
+  // here.
+  userId: string | null
+  // Avatar selection is a client-only preference that the backend does not
+  // know about, so we keep it persisted alongside the user id.
+  avatarStyle: AvatarStyle | null
+  avatarSeed: string | null
   currentLocationId: string | null
   // Session-only: lets the player pretend it's a different time of day when
   // asking the server for a location state. `null` means "use real wall clock".
@@ -34,8 +29,12 @@ type GameState = {
   // these long-lived per user, so caching the id avoids creating a new
   // chat on every page load.
   systemChatId: string | null
-  setPlayer: (player: PlayerProfile) => void
-  clearPlayer: () => void
+  setUser: (user: {
+    id: string
+    avatarStyle: AvatarStyle
+    avatarSeed: string
+  }) => void
+  clearUser: () => void
   setCurrentLocation: (id: string | null) => void
   setTimeOverride: (iso: string | null) => void
   setUiLanguage: (language: UiLanguage) => void
@@ -59,15 +58,20 @@ function detectDefaultLanguage(): UiLanguage {
 export const useGameStore = create<GameState>()(
   persist(
     (set) => ({
-      player: null,
+      userId: null,
+      avatarStyle: null,
+      avatarSeed: null,
       currentLocationId: null,
       timeOverride: null,
       uiLanguage: detectDefaultLanguage(),
       systemChatId: null,
-      setPlayer: (player) => set({ player }),
-      clearPlayer: () =>
+      setUser: ({ id, avatarStyle, avatarSeed }) =>
+        set({ userId: id, avatarStyle, avatarSeed }),
+      clearUser: () =>
         set((s) => ({
-          player: null,
+          userId: null,
+          avatarStyle: null,
+          avatarSeed: null,
           currentLocationId: null,
           timeOverride: null,
           // Preserve the UI language across logout — it's a preference,
@@ -84,51 +88,15 @@ export const useGameStore = create<GameState>()(
     {
       name: 'gpt-city-game',
       storage: createJSONStorage(() => localStorage),
-      // v5 adds `systemChatId` — id of the player's persistent assistant
-      // chat used by the global "Game Assistant" panel.
-      version: 5,
+      version: 1,
       partialize: (state) => ({
-        player: state.player,
+        userId: state.userId,
+        avatarStyle: state.avatarStyle,
+        avatarSeed: state.avatarSeed,
         currentLocationId: state.currentLocationId,
         uiLanguage: state.uiLanguage,
         systemChatId: state.systemChatId,
       }),
-      migrate: (state, fromVersion) => {
-        if (fromVersion < 2) {
-          return {
-            player: null,
-            currentLocationId: null,
-            timeOverride: null,
-            uiLanguage: detectDefaultLanguage(),
-            systemChatId: null,
-          } as GameState
-        }
-        const s = state as Partial<GameState> & {
-          chatLanguage?: unknown
-          uiLanguage?: unknown
-          systemChatId?: unknown
-        }
-        if (fromVersion < 4) {
-          return {
-            player: s.player ?? null,
-            currentLocationId: s.currentLocationId ?? null,
-            timeOverride: null,
-            uiLanguage:
-              (s.uiLanguage as UiLanguage | undefined) ??
-              (s.chatLanguage as UiLanguage | undefined) ??
-              detectDefaultLanguage(),
-            systemChatId: null,
-          } as GameState
-        }
-        if (fromVersion < 5) {
-          return {
-            ...(s as GameState),
-            systemChatId:
-              typeof s.systemChatId === 'string' ? s.systemChatId : null,
-          } as GameState
-        }
-        return state as GameState
-      },
     },
   ),
 )

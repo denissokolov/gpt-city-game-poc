@@ -14,7 +14,7 @@ function isHiddenPath(pathname: string): boolean {
 
 export default function SystemChatLauncher() {
   const t = useT()
-  const player = useGameStore((s) => s.player)
+  const userId = useGameStore((s) => s.userId)
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
 
@@ -37,7 +37,7 @@ export default function SystemChatLauncher() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open])
 
-  if (!player || hidden) return null
+  if (!userId || hidden) return null
 
   return (
     <>

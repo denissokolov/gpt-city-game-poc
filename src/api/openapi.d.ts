@@ -126,6 +126,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the current user */
+        get: operations["UsersController_findCurrent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{id}": {
         parameters: {
             query?: never;
@@ -294,6 +311,11 @@ export interface components {
              * @example f1e2d3c4-b5a6-4789-bcde-f12345678901
              */
             placeId: string;
+            /**
+             * @description ID of the location state snapshot returned by GET /locations/:id/state. Anchors the chat to a specific placement and mood/activity for its characters.
+             * @example d4e5f6a7-b8c9-0123-defa-234567890123
+             */
+            stateId: string;
         };
         ChatDto: {
             /**
@@ -318,6 +340,11 @@ export interface components {
              * @example c3d4e5f6-a7b8-4012-bdef-123456789012
              */
             userId: string;
+            /**
+             * @description ID of the location state snapshot this chat is anchored to
+             * @example d4e5f6a7-b8c9-0123-defa-234567890123
+             */
+            stateId: string;
             /**
              * @description Summary of the chat conversation
              * @example Discussed the weather and weekend plans.
@@ -401,6 +428,11 @@ export interface components {
              * @enum {string}
              */
             locale: "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
+            /**
+             * @description Unique identifier of this saved state snapshot. Pass it as `stateId` when creating a chat to anchor the chat to this distribution.
+             * @example b2c3d4e5-f6a7-8901-bcde-f12345678901
+             */
+            stateId: string;
             /** @description Places within this location, each with the characters currently present there */
             places: components["schemas"]["PlaceStateDto"][];
         };
@@ -770,6 +802,42 @@ export interface operations {
             };
             /** @description Invalid request body */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_findCurrent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description ID of the user performing the request */
+                "x-user-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto"];
+                };
+            };
+            /** @description Missing or invalid x-user-id header */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

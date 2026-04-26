@@ -126,12 +126,10 @@ interface SystemChatPanelProps {
 
 export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
   const t = useT()
-  const player = useGameStore((s) => s.player)
+  const userId = useGameStore((s) => s.userId)
   const systemChatId = useGameStore((s) => s.systemChatId)
   const setSystemChatId = useGameStore((s) => s.setSystemChatId)
   const forgetSystemChatId = useGameStore((s) => s.forgetSystemChatId)
-
-  const userId = player?.id ?? null
 
   const [view, setView] = useState<'chat' | 'history'>('chat')
 
@@ -288,7 +286,8 @@ function SystemChatConversation({
   onStaleChat,
 }: SystemChatConversationProps) {
   const t = useT()
-  const player = useGameStore((s) => s.player)
+  const avatarStyle = useGameStore((s) => s.avatarStyle)
+  const avatarSeed = useGameStore((s) => s.avatarSeed)
   const uiLanguage = useGameStore((s) => s.uiLanguage)
   const queryClient = useQueryClient()
 
@@ -405,9 +404,9 @@ function SystemChatConversation({
                   ) : (
                     <AssistantMessage message={m} streamingThis={isStreamingThis} />
                   )}
-                  {isUser && player && (
+                  {isUser && avatarStyle && avatarSeed && (
                     <img
-                      src={avatarUrl(player.avatarStyle, player.avatarSeed, 64)}
+                      src={avatarUrl(avatarStyle, avatarSeed, 64)}
                       alt=""
                       className="h-7 w-7 rounded-full border border-white/10 shrink-0"
                     />
