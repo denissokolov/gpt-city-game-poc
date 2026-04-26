@@ -88,6 +88,8 @@ export type Messages = {
     deleteConfirm: string;
     deleteCancel: string;
     deleteFailed: string;
+    helpButton: string;
+    helpMessage: string;
     toolRunning: string;
     toolFinished: string;
     toolFailed: string;
@@ -226,6 +228,8 @@ const en: Messages = {
     deleteConfirm: "Delete?",
     deleteCancel: "Cancel",
     deleteFailed: "Couldn't delete chat",
+    helpButton: "Help",
+    helpMessage: "What can you help me with?",
     toolRunning: "Running",
     toolFinished: "Used",
     toolFailed: "Failed",
@@ -397,6 +401,8 @@ const ru: Messages = {
     deleteConfirm: "Удалить?",
     deleteCancel: "Отмена",
     deleteFailed: "Не удалось удалить чат",
+    helpButton: "Помощь",
+    helpMessage: "Чем ты можешь мне помочь?",
     toolRunning: "Выполняет",
     toolFinished: "Использовал",
     toolFailed: "Ошибка",

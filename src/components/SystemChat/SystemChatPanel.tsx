@@ -443,6 +443,18 @@ function SystemChatConversation({
         onSubmit={handleSubmit}
         className="border-t border-white/5 bg-city-bg/80 px-3 py-2.5 backdrop-blur-md"
       >
+        <div className="mb-2">
+          <button
+            type="button"
+            className="btn-ghost rounded-full px-3 py-1 text-xs"
+            disabled={isStreaming}
+            onClick={() => {
+              void sendMessage({ text: t.systemChat.helpMessage })
+            }}
+          >
+            {t.systemChat.helpButton}
+          </button>
+        </div>
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
