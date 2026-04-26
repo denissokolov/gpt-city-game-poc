@@ -206,8 +206,8 @@ const en: Messages = {
     submitting: "Creating…",
     saveChanges: "Save changes",
     saving: "Saving…",
-    startOver: "Start over",
-    startOverConfirm: "Yes, start over",
+    startOver: "New avatar",
+    startOverConfirm: "Yes, new avatar",
     startOverCancel: "Cancel",
   },
   map: {
@@ -401,8 +401,8 @@ const ru: Messages = {
     submitting: "Создаём…",
     saveChanges: "Сохранить изменения",
     saving: "Сохраняем…",
-    startOver: "Начать заново",
-    startOverConfirm: "Да, начать заново",
+    startOver: "Новый аватар",
+    startOverConfirm: "Да, новый аватар",
     startOverCancel: "Отмена",
   },
   map: {
