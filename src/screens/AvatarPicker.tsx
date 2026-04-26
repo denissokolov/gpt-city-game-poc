@@ -25,6 +25,7 @@ function fallbackCosmetics(avatar: AvatarDto): {
 export default function AvatarPickerScreen() {
   const t = useT()
   const navigate = useNavigate()
+  const avatarId = useGameStore((s) => s.avatarId)
   const setActiveAvatar = useGameStore((s) => s.setActiveAvatar)
   const cosmeticsMap = useGameStore((s) => s.avatarCosmetics)
 
@@ -53,6 +54,10 @@ export default function AvatarPickerScreen() {
       onSettled: () => navigate('/login', { replace: true }),
     })
   }
+
+  const canCancelToMap = Boolean(
+    avatarId && avatars?.some((a) => a.id === avatarId),
+  )
 
   return (
     <div className="min-h-dvh grid place-items-center p-4 sm:p-8">
@@ -130,14 +135,28 @@ export default function AvatarPickerScreen() {
         )}
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            className="btn-ghost text-xs"
-            onClick={handleSignOut}
-            disabled={logoutMutation.isPending}
-          >
-            {t.auth.signOut}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {canCancelToMap ? (
+              <button
+                type="button"
+                className="btn-ghost text-xs"
+                onClick={handleSignOut}
+                disabled={logoutMutation.isPending}
+              >
+                {t.auth.signOut}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="btn-ghost text-xs"
+              onClick={
+                canCancelToMap ? () => navigate('/map') : handleSignOut
+              }
+              disabled={logoutMutation.isPending}
+            >
+              {t.common.cancel}
+            </button>
+          </div>
           <button
             type="button"
             className="btn-primary"

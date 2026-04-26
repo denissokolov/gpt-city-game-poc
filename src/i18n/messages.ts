@@ -9,6 +9,7 @@ export type Messages = {
   common: {
     back: string;
     backToMap: string;
+    cancel: string;
     changeAvatar: string;
     shuffle: string;
     send: string;
@@ -153,6 +154,7 @@ const en: Messages = {
   common: {
     back: "Back",
     backToMap: "Back to map",
+    cancel: "Cancel",
     changeAvatar: "Change avatar",
     shuffle: "Shuffle",
     send: "Send",
@@ -348,6 +350,7 @@ const ru: Messages = {
   common: {
     back: "Назад",
     backToMap: "К карте",
+    cancel: "Отмена",
     changeAvatar: "Сменить аватар",
     shuffle: "Перемешать",
     send: "Отправить",

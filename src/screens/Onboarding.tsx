@@ -9,7 +9,12 @@ import {
 } from '@/game/avatars'
 import { useGameStore, type PlayerSex } from '@/game/store'
 import { createAvatar, updateAvatar, useCurrentAvatar } from '@/api/avatars'
-import { MY_AVATARS_QUERY_KEY, useLogout, useMe } from '@/api/auth'
+import {
+  MY_AVATARS_QUERY_KEY,
+  useLogout,
+  useMe,
+  useMyAvatars,
+} from '@/api/auth'
 import type { AvatarDto } from '@/api/client'
 import { toastError } from '@/components/Toaster'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -102,6 +107,7 @@ function OnboardingForm({
   const setActiveAvatar = useGameStore((s) => s.setActiveAvatar)
   const clearActiveAvatar = useGameStore((s) => s.clearActiveAvatar)
   const logoutMutation = useLogout()
+  const { data: myAvatars } = useMyAvatars()
 
   const [firstName, setFirstName] = useState(
     existing?.firstName ?? defaultFirstName,
@@ -118,6 +124,8 @@ function OnboardingForm({
   const [confirmStartOver, setConfirmStartOver] = useState(false)
 
   const isEditing = existing !== null
+  const showCancel =
+    isEditing || Boolean(myAvatars && myAvatars.length > 0)
 
   const preview = useMemo(() => avatarUrl(style, seed, 192), [style, seed])
   const canContinue =
@@ -193,6 +201,11 @@ function OnboardingForm({
     })
   }
 
+  function handleCancel() {
+    if (isEditing) navigate('/map')
+    else navigate('/avatars')
+  }
+
   return (
     <div className="min-h-dvh grid place-items-center p-4 sm:p-8">
       <motion.form
@@ -216,6 +229,16 @@ function OnboardingForm({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitcher />
+            {showCancel ? (
+              <button
+                type="button"
+                className="btn-ghost text-xs"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                {t.common.cancel}
+              </button>
+            ) : null}
             <button
               type="button"
               className="btn-ghost text-xs"
