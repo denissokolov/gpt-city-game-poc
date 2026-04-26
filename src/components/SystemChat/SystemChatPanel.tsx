@@ -132,6 +132,7 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
   const forgetSystemChatId = useGameStore((s) => s.forgetSystemChatId)
 
   const [view, setView] = useState<'chat' | 'history'>('chat')
+  const helpRef = useRef<(() => void) | null>(null)
 
   const queryClient = useQueryClient()
 
@@ -220,6 +221,15 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
                 <HistoryIcon className="h-4 w-4" />
               )}
             </button>
+            <button
+              type="button"
+              className="btn-ghost inline-flex h-9 w-9 shrink-0 items-center justify-center !p-0"
+              onClick={() => helpRef.current?.()}
+              aria-label={t.systemChat.helpButton}
+              title={t.systemChat.helpButton}
+            >
+              <HelpIcon className="h-4 w-4" />
+            </button>
           </>
         )}
         <button
@@ -254,6 +264,7 @@ export default function SystemChatPanel({ onClose }: SystemChatPanelProps) {
           chatId={systemChatId}
           avatarId={avatarId}
           initialMessages={initialMessages}
+          helpRef={helpRef}
           onStaleChat={() => {
             forgetSystemChatId()
             lastAttemptedFor.current = null
@@ -276,6 +287,7 @@ interface SystemChatConversationProps {
   chatId: string
   avatarId: string
   initialMessages: UIMessage[]
+  helpRef: React.MutableRefObject<(() => void) | null>
   onStaleChat: () => void
 }
 
@@ -283,6 +295,7 @@ function SystemChatConversation({
   chatId,
   avatarId,
   initialMessages,
+  helpRef,
   onStaleChat,
 }: SystemChatConversationProps) {
   const t = useT()
@@ -342,6 +355,15 @@ function SystemChatConversation({
   const scrollerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    helpRef.current = () => {
+      if (!isStreaming) void sendMessage({ text: t.systemChat.helpMessage })
+    }
+    return () => {
+      helpRef.current = null
+    }
+  })
 
   useEffect(() => {
     const scroller = scrollerRef.current
@@ -445,18 +467,6 @@ function SystemChatConversation({
         onSubmit={handleSubmit}
         className="border-t border-white/5 bg-city-bg/80 px-3 py-2.5 backdrop-blur-md"
       >
-        <div className="mb-2">
-          <button
-            type="button"
-            className="btn-ghost rounded-full px-3 py-1 text-xs"
-            disabled={isStreaming}
-            onClick={() => {
-              void sendMessage({ text: t.systemChat.helpMessage })
-            }}
-          >
-            {t.systemChat.helpButton}
-          </button>
-        </div>
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -569,6 +579,25 @@ function ArrowLeftIcon({ className }: { className?: string }) {
     >
       <path d="M19 12H5" />
       <path d="m12 19-7-7 7-7" />
+    </svg>
+  )
+}
+
+function HelpIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
     </svg>
   )
 }
