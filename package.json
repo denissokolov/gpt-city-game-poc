@@ -1,7 +1,7 @@
 {
   "name": "gpt-city-web",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.170",
+    "@react-oauth/google": "^0.13.5",
     "@tanstack/react-query": "^5.59.0",
     "ai": "^6.0.168",
     "clsx": "^2.1.1",

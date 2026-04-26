@@ -137,6 +137,14 @@ export default function MapScreen() {
             </div>
           )}
 
+          {!isLoading && locations && locations.length === 0 && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center p-6 sm:p-10 pointer-events-none">
+              <p className="max-w-md text-center text-sm text-city-muted leading-relaxed">
+                {t.map.emptyHint}
+              </p>
+            </div>
+          )}
+
           {locations?.map((loc) => {
             const pos = positions[loc.id]
             if (!pos) return null

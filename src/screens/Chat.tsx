@@ -53,6 +53,7 @@ export default function ChatScreen() {
   const avatarId = useGameStore((s) => s.avatarId)
   const avatarStyle = useGameStore((s) => s.avatarStyle)
   const avatarSeed = useGameStore((s) => s.avatarSeed)
+  const accessToken = useGameStore((s) => s.accessToken)
   const currentLocationId = useGameStore((s) => s.currentLocationId)
   const uiLanguage = useGameStore((s) => s.uiLanguage)
 
@@ -74,10 +75,14 @@ export default function ChatScreen() {
   }, [characterId, location, allCharacters])
 
   const transport = useMemo(() => {
-    if (!chatId || !avatarId) return undefined
+    if (!chatId || !avatarId || !accessToken) return undefined
     return new DefaultChatTransport<UIMessage>({
       api: `${API_BASE_URL}/chats/${encodeURIComponent(chatId)}/message`,
-      headers: { 'x-avatar-id': avatarId, 'x-locale': uiLanguage },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'x-avatar-id': avatarId,
+        'x-locale': uiLanguage,
+      },
       prepareSendMessagesRequest: ({ messages, body }) => {
         if (body && (body as { activity?: unknown }).activity === 'silence') {
           return { body: { activity: 'silence' } }
@@ -87,7 +92,7 @@ export default function ChatScreen() {
         return { body: { message } }
       },
     })
-  }, [chatId, avatarId, uiLanguage])
+  }, [chatId, avatarId, uiLanguage, accessToken])
 
   // A chat id can go stale within a session if the backend drops or rotates
   // it (e.g. staging DB reset). In that case the send fails with 403/404;

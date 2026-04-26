@@ -301,6 +301,7 @@ function SystemChatConversation({
   const t = useT()
   const avatarStyle = useGameStore((s) => s.avatarStyle)
   const avatarSeed = useGameStore((s) => s.avatarSeed)
+  const accessToken = useGameStore((s) => s.accessToken)
   const uiLanguage = useGameStore((s) => s.uiLanguage)
   const queryClient = useQueryClient()
 
@@ -308,14 +309,18 @@ function SystemChatConversation({
     () =>
       new DefaultChatTransport<UIMessage>({
         api: `${API_BASE_URL}/system-chats/${encodeURIComponent(chatId)}/messages`,
-        headers: { 'x-avatar-id': avatarId, 'x-locale': uiLanguage },
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          'x-avatar-id': avatarId,
+          'x-locale': uiLanguage,
+        },
         prepareSendMessagesRequest: ({ messages }) => {
           const last = messages[messages.length - 1]
           const message = last ? partsToText(last) : ''
           return { body: { message } }
         },
       }),
-    [chatId, avatarId, uiLanguage],
+    [chatId, avatarId, uiLanguage, accessToken],
   )
 
   const { messages, sendMessage, status, error } = useChat({

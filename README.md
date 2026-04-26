@@ -19,10 +19,11 @@ point at a different host (e.g. a local backend).
 - Tailwind CSS
 - React Router v6
 - TanStack Query (REST caching)
-- Zustand + `persist` (player profile incl. backend `userId`, current
-  location, `chatId` per `(placeId, characterId)`)
-- `@ai-sdk/react` `useChat` + `DefaultChatTransport` (streaming chat, with
-  `x-user-id` forwarded on every request)
+- Zustand + `persist` (auth tokens, active avatar, per-avatar cosmetics,
+  current location, `systemChatId`)
+- `@react-oauth/google` (Google Identity Services, ID-token sign-in + One Tap)
+- `@ai-sdk/react` `useChat` + `DefaultChatTransport` (streaming chat with
+  `Authorization: Bearer <jwt>` and `x-avatar-id`)
 - Framer Motion (map walk transitions, message animations)
 - DiceBear avatars (deterministic, no assets to ship)
 
@@ -34,12 +35,25 @@ npm run gen:api       # regenerate src/api/openapi.d.ts from the live spec
 npm run dev           # http://localhost:5173
 ```
 
-Copy `.env.example` to `.env.local` to override env vars (e.g. when iterating
-against a local backend):
+Copy `.env.example` to `.env.local` (or `.env`) and add at minimum a Google
+OAuth client id; optionally point at a different backend:
 
 ```
-VITE_API_BASE_URL=http://localhost:3000
+VITE_GOOGLE_CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+# VITE_API_BASE_URL=http://localhost:3000
 ```
+
+### Google sign-in
+
+The app authenticates via Google Sign-In. Create a Web OAuth 2.0 client id in
+the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+(*Create credentials → OAuth client ID → Web application*) and add your dev
+origin (e.g. `http://localhost:5173`) to **Authorized JavaScript origins**.
+Paste the resulting client id into `VITE_GOOGLE_CLIENT_ID`.
+
+The frontend exchanges the Google ID token at `POST /auth/google` for an
+application JWT + refresh token (stored in `localStorage`). The access token
+is refreshed proactively before expiry and reactively on `401`.
 
 ## Scripts
 

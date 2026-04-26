@@ -9,6 +9,7 @@ import {
 } from '@/game/avatars'
 import { useGameStore, type PlayerSex } from '@/game/store'
 import { createAvatar, updateAvatar, useCurrentAvatar } from '@/api/avatars'
+import { MY_AVATARS_QUERY_KEY, useLogout, useMe } from '@/api/auth'
 import type { AvatarDto } from '@/api/client'
 import { toastError } from '@/components/Toaster'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -18,6 +19,17 @@ import { cn } from '@/lib/cn'
 
 function randomSeed() {
   return Math.random().toString(36).slice(2, 10)
+}
+
+// Splits a Google display name like "Alice Smith" into first/last for
+// prefilling the create-avatar form. Falls back to ['', ''] if absent.
+function splitFullName(full: string | undefined | null): [string, string] {
+  if (!full) return ['', '']
+  const trimmed = full.trim()
+  if (!trimmed) return ['', '']
+  const idx = trimmed.indexOf(' ')
+  if (idx === -1) return [trimmed, '']
+  return [trimmed.slice(0, idx).trim(), trimmed.slice(idx + 1).trim()]
 }
 
 const SEX_ORDER: PlayerSex[] = ['female', 'male', 'non_binary']
@@ -33,14 +45,22 @@ export default function OnboardingScreen() {
   // form so its initial state can be derived from props (no setState in
   // effects required to backfill fields).
   const { data: existing, isLoading } = useCurrentAvatar()
+  // Used to prefill name fields when creating an avatar for the first time.
+  const { data: me } = useMe()
 
   if (isEditing && isLoading && !existing) {
     return <OnboardingSkeleton />
   }
 
+  const [defaultFirstName, defaultLastName] = isEditing
+    ? ['', '']
+    : splitFullName(me?.name)
+
   return (
     <OnboardingForm
       existing={existing ?? null}
+      defaultFirstName={defaultFirstName}
+      defaultLastName={defaultLastName}
       defaultAvatarStyle={storedAvatarStyle ?? 'adventurer'}
       defaultAvatarSeed={storedAvatarSeed ?? randomSeed()}
     />
@@ -63,23 +83,32 @@ function OnboardingSkeleton() {
 
 interface OnboardingFormProps {
   existing: AvatarDto | null
+  defaultFirstName: string
+  defaultLastName: string
   defaultAvatarStyle: AvatarStyle
   defaultAvatarSeed: string
 }
 
 function OnboardingForm({
   existing,
+  defaultFirstName,
+  defaultLastName,
   defaultAvatarStyle,
   defaultAvatarSeed,
 }: OnboardingFormProps) {
   const t = useT()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const setAvatar = useGameStore((s) => s.setAvatar)
-  const clearAvatar = useGameStore((s) => s.clearAvatar)
+  const setActiveAvatar = useGameStore((s) => s.setActiveAvatar)
+  const clearActiveAvatar = useGameStore((s) => s.clearActiveAvatar)
+  const logoutMutation = useLogout()
 
-  const [firstName, setFirstName] = useState(existing?.firstName ?? '')
-  const [lastName, setLastName] = useState(existing?.lastName ?? '')
+  const [firstName, setFirstName] = useState(
+    existing?.firstName ?? defaultFirstName,
+  )
+  const [lastName, setLastName] = useState(
+    existing?.lastName ?? defaultLastName,
+  )
   const [age, setAge] = useState<number>(existing?.age ?? 30)
   const [sex, setSex] = useState<PlayerSex>(existing?.sex ?? 'non_binary')
   const [title, setTitle] = useState(existing?.title ?? '')
@@ -131,10 +160,12 @@ function OnboardingForm({
       // Seed the React Query cache so the next screen doesn't have to
       // re-fetch the profile we already have in hand.
       queryClient.setQueryData(['current-avatar', avatar.id], avatar)
-      setAvatar({
+      // Make sure the avatar picker reflects the new/updated avatar.
+      void queryClient.invalidateQueries({ queryKey: MY_AVATARS_QUERY_KEY })
+      setActiveAvatar({
         id: avatar.id,
-        avatarStyle: style,
-        avatarSeed: seed,
+        style,
+        seed,
       })
       navigate('/map')
     } catch {
@@ -143,10 +174,10 @@ function OnboardingForm({
   }
 
   function handleStartOver() {
-    clearAvatar()
+    clearActiveAvatar()
     queryClient.removeQueries({ queryKey: ['current-avatar'] })
-    setFirstName('')
-    setLastName('')
+    setFirstName(defaultFirstName)
+    setLastName(defaultLastName)
     setAge(30)
     setSex('non_binary')
     setTitle('')
@@ -154,6 +185,12 @@ function OnboardingForm({
     setStyle('adventurer')
     setSeed(randomSeed())
     setConfirmStartOver(false)
+  }
+
+  function handleSignOut() {
+    logoutMutation.mutate(undefined, {
+      onSettled: () => navigate('/login', { replace: true }),
+    })
   }
 
   return (
@@ -177,7 +214,17 @@ function OnboardingForm({
               {t.onboarding.subtitle}
             </p>
           </div>
-          <LanguageSwitcher className="shrink-0" />
+          <div className="flex shrink-0 items-center gap-2">
+            <LanguageSwitcher />
+            <button
+              type="button"
+              className="btn-ghost text-xs"
+              onClick={handleSignOut}
+              disabled={isSubmitting || logoutMutation.isPending}
+            >
+              {t.auth.signOut}
+            </button>
+          </div>
         </header>
 
         <div className="grid gap-6 sm:grid-cols-[auto,1fr] sm:items-start">

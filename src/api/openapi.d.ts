@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/avatars": {
+    "/auth/google": {
         parameters: {
             query?: never;
             header?: never;
@@ -30,7 +30,85 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create a new avatar */
+        /**
+         * Exchange a Google ID token for an application JWT
+         * @description Verifies a Google ID token obtained on the client via Google Sign-In. Creates a new user account on first login or updates an existing one. Returns an access JWT for Authorization: Bearer headers, accessTokenExpiresAt for proactive refresh, and a refresh token for POST /auth/refresh.
+         */
+        post: operations["AuthController_googleAuth"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Issue a new access token using a refresh token
+         * @description Exchanges a valid refresh token for a new access token, accessTokenExpiresAt, and a new refresh token (rotation). The previous refresh token is invalidated after a successful refresh.
+         */
+        post: operations["AuthController_refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invalidate the server-side refresh session
+         * @description When a refresh token is supplied, its identifier is revoked so it can no longer be used with POST /auth/refresh. Access JWTs are not stored on the server and remain valid until they expire; clients should discard all tokens locally.
+         */
+        post: operations["AuthController_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Return the currently authenticated user */
+        get: operations["AuthController_getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/avatars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the authenticated user's avatars */
+        get: operations["AvatarsController_findMine"];
+        put?: never;
+        /** Create a new avatar owned by the authenticated user */
         post: operations["AvatarsController_create"];
         delete?: never;
         options?: never;
@@ -167,10 +245,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List system chats owned by the current avatar */
+        /** List system chats owned by the current user */
         get: operations["SystemChatsController_list"];
         put?: never;
-        /** Create a new system chat for the current avatar. The title is auto-generated from the first message. */
+        /** Create a new system chat for the current user. The title is auto-generated from the first message. */
         post: operations["SystemChatsController_create"];
         delete?: never;
         options?: never;
@@ -188,7 +266,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete a system chat owned by the current avatar */
+        /** Delete a system chat owned by the current user */
         delete: operations["SystemChatsController_remove"];
         options?: never;
         head?: never;
@@ -225,7 +303,7 @@ export interface components {
             status: string;
             /**
              * @description Server version
-             * @example 0.0.1
+             * @example 0.0.3
              */
             version: string;
             /**
@@ -238,6 +316,61 @@ export interface components {
              * @example ok
              */
             database: string;
+        };
+        GoogleAuthDto: {
+            /**
+             * @description Google ID token obtained from Google Sign-In on the client
+             * @example eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOWdkaz...
+             */
+            idToken: string;
+        };
+        AuthTokenDto: {
+            /**
+             * @description JWT access token to use in Authorization: Bearer headers
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            accessToken: string;
+            /**
+             * @description Unix timestamp in seconds (UTC) when the access token expires — identical to the access JWT `exp` claim. Use for proactive refresh timers without decoding the JWT on the client.
+             * @example 1735689600
+             */
+            accessTokenExpiresAt: number;
+            /**
+             * @description Long-lived refresh token. Send it to POST /auth/refresh to obtain a new access token without signing in with Google again. Treat it like a password: store securely and revoke via POST /auth/logout when the user signs out.
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            refreshToken: string;
+        };
+        RefreshAuthDto: {
+            /**
+             * @description Refresh token previously returned from POST /auth/google or POST /auth/refresh
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            refreshToken: string;
+        };
+        LogoutAuthDto: {
+            /**
+             * @description When provided, the server records this refresh token as revoked so it can no longer be used at POST /auth/refresh. Omit the field if the client only discards tokens locally.
+             * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+             */
+            refreshToken?: string;
+        };
+        AuthUserDto: {
+            /**
+             * @description Unique identifier of the user
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            id: string;
+            /**
+             * @description Google account email address
+             * @example alice@example.com
+             */
+            email: string;
+            /**
+             * @description Full display name from Google profile
+             * @example Alice Smith
+             */
+            name: string;
         };
         CreateAvatarDto: {
             /**
@@ -547,7 +680,12 @@ export interface components {
              */
             id: string;
             /**
-             * @description ID of the avatar who owns the system chat
+             * @description ID of the user who owns the system chat
+             * @example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+             */
+            userId: string;
+            /**
+             * @description ID of the avatar associated with this system chat
              * @example c3d4e5f6-a7b8-4012-bdef-123456789012
              */
             avatarId: string;
@@ -581,7 +719,12 @@ export interface components {
              */
             systemChatId: string;
             /**
-             * @description ID of the avatar who owns the chat this message belongs to
+             * @description ID of the user who owns the chat this message belongs to
+             * @example a1b2c3d4-e5f6-7890-abcd-ef1234567890
+             */
+            userId: string;
+            /**
+             * @description ID of the avatar associated with the message
              * @example c3d4e5f6-a7b8-4012-bdef-123456789012
              */
             avatarId: string;
@@ -638,6 +781,140 @@ export interface operations {
             };
         };
     };
+    AuthController_googleAuth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoogleAuthDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokenDto"];
+                };
+            };
+            /** @description Invalid or expired Google ID token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshAuthDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthTokenDto"];
+                };
+            };
+            /** @description Invalid, expired, or revoked refresh token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LogoutAuthDto"];
+            };
+        };
+        responses: {
+            /** @description Logout accepted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthController_getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthUserDto"];
+                };
+            };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AvatarsController_findMine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarDto"][];
+                };
+            };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AvatarsController_create: {
         parameters: {
             query?: never;
@@ -661,6 +938,13 @@ export interface operations {
             };
             /** @description Invalid request body */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid JWT */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -690,6 +974,13 @@ export interface operations {
             };
             /** @description Missing or invalid x-avatar-id header */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid JWT */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -735,6 +1026,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Avatar not found */
             404: {
                 headers: {
@@ -760,6 +1058,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CharacterDto"][];
                 };
+            };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -791,6 +1096,13 @@ export interface operations {
             };
             /** @description Invalid request body */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid JWT */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -833,6 +1145,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     LocationsController_findAll: {
@@ -851,6 +1170,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LocationDto"][];
                 };
+            };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -876,6 +1202,13 @@ export interface operations {
                     "application/json": components["schemas"]["LocationStateDto"];
                 };
             };
+            /** @description Missing or invalid JWT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Location not found */
             404: {
                 headers: {
@@ -888,10 +1221,7 @@ export interface operations {
     SystemChatsController_list: {
         parameters: {
             query?: never;
-            header: {
-                /** @description ID of the avatar performing the request */
-                "x-avatar-id": string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -932,11 +1262,9 @@ export interface operations {
     SystemChatsController_remove: {
         parameters: {
             query?: never;
-            header: {
-                /** @description ID of the avatar performing the request */
-                "x-avatar-id": string;
-            };
+            header?: never;
             path: {
+                /** @description Unique identifier of the system chat to delete */
                 id: string;
             };
             cookie?: never;
@@ -950,7 +1278,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Avatar does not own the chat */
+            /** @description Forbidden – not the owner */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -969,11 +1297,9 @@ export interface operations {
     SystemChatsController_listMessages: {
         parameters: {
             query?: never;
-            header: {
-                /** @description ID of the avatar performing the request */
-                "x-avatar-id": string;
-            };
+            header?: never;
             path: {
+                /** @description Unique identifier of the system chat */
                 id: string;
             };
             cookie?: never;
@@ -988,7 +1314,7 @@ export interface operations {
                     "application/json": components["schemas"]["SystemMessageDto"][];
                 };
             };
-            /** @description Avatar does not own the chat */
+            /** @description Forbidden – not the owner */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -1008,12 +1334,13 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description ID of the avatar performing the request */
-                "x-avatar-id": string;
                 /** @description Locale of the user performing the request */
                 "x-locale": "en-US" | "ru" | "cs" | "da" | "de" | "el" | "en-GB" | "es" | "fi" | "fr" | "hr" | "it" | "nb" | "nl" | "pl" | "pt-BR" | "pt-PT" | "sk" | "sv" | "tr" | "uk";
+                /** @description ID of the avatar performing the request */
+                "x-avatar-id": string;
             };
             path: {
+                /** @description Unique identifier of the system chat */
                 id: string;
             };
             cookie?: never;
@@ -1039,7 +1366,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Avatar does not own the chat */
+            /** @description Forbidden – not the owner */
             403: {
                 headers: {
                     [name: string]: unknown;

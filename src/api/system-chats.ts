@@ -1,32 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiFetch, type SystemChatDto, type SystemMessageDto } from './client'
+import { apiFetchAuthed, type SystemChatDto, type SystemMessageDto } from './client'
 import { toastError } from '@/components/Toaster'
 import { useGameStore } from '@/game/store'
 
-export function fetchSystemMessages(id: string, avatarId: string) {
-  return apiFetch<SystemMessageDto[]>(
+export function fetchSystemMessages(id: string) {
+  return apiFetchAuthed<SystemMessageDto[]>(
     `/system-chats/${encodeURIComponent(id)}/messages`,
-    { headers: { 'x-avatar-id': avatarId } },
   )
 }
 
-export function listSystemChats(avatarId: string) {
-  return apiFetch<SystemChatDto[]>('/system-chats', {
-    headers: { 'x-avatar-id': avatarId },
-  })
+export function listSystemChats() {
+  return apiFetchAuthed<SystemChatDto[]>('/system-chats')
 }
 
 export function createSystemChat(avatarId: string) {
-  return apiFetch<SystemChatDto>('/system-chats', {
+  return apiFetchAuthed<SystemChatDto>('/system-chats', {
     method: 'POST',
     headers: { 'x-avatar-id': avatarId },
   })
 }
 
-export function deleteSystemChat(id: string, avatarId: string) {
-  return apiFetch<void>(`/system-chats/${encodeURIComponent(id)}`, {
+export function deleteSystemChat(id: string) {
+  return apiFetchAuthed<void>(`/system-chats/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    headers: { 'x-avatar-id': avatarId },
   })
 }
 
@@ -37,7 +33,7 @@ export function useSystemMessages(
   return useQuery({
     queryKey: ['system-messages', chatId],
     enabled: Boolean(chatId && avatarId),
-    queryFn: () => fetchSystemMessages(chatId as string, avatarId as string),
+    queryFn: () => fetchSystemMessages(chatId as string),
   })
 }
 
@@ -45,7 +41,7 @@ export function useSystemChats(avatarId: string | null | undefined) {
   return useQuery({
     queryKey: ['system-chats', avatarId],
     enabled: Boolean(avatarId),
-    queryFn: () => listSystemChats(avatarId as string),
+    queryFn: () => listSystemChats(),
   })
 }
 
@@ -54,7 +50,7 @@ export function useDeleteSystemChat(avatarId: string) {
   const forgetSystemChatId = useGameStore((s) => s.forgetSystemChatId)
   const activeSystemChatId = useGameStore((s) => s.systemChatId)
   return useMutation({
-    mutationFn: (id: string) => deleteSystemChat(id, avatarId),
+    mutationFn: (id: string) => deleteSystemChat(id),
     onSuccess: (_data, id) => {
       void queryClient.invalidateQueries({
         queryKey: ['system-chats', avatarId],

@@ -1,4 +1,6 @@
 import { useGameStore } from '@/game/store'
+import { getMessages } from '@/i18n'
+import { toast } from '@/components/Toaster'
 import type { components } from './openapi'
 
 export type CharacterDto = components['schemas']['CharacterDto']
@@ -14,6 +16,11 @@ export type AvatarDto = components['schemas']['AvatarDto']
 export type SystemChatDto = components['schemas']['SystemChatDto']
 export type SystemMessageDto = components['schemas']['SystemMessageDto']
 export type SendSystemMessageDto = components['schemas']['SendSystemMessageDto']
+export type AuthTokenDto = components['schemas']['AuthTokenDto']
+export type AuthUserDto = components['schemas']['AuthUserDto']
+export type GoogleAuthDto = components['schemas']['GoogleAuthDto']
+export type RefreshAuthDto = components['schemas']['RefreshAuthDto']
+export type LogoutAuthDto = components['schemas']['LogoutAuthDto']
 
 const STAGING_API = 'https://gpt-city-api-5950170b319a.herokuapp.com'
 
@@ -62,4 +69,83 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     return (await response.json()) as T
   }
   return (await response.text()) as unknown as T
+}
+
+// Module-level state for the in-flight refresh promise. Concurrent 401s
+// should share a single refresh round-trip and pick up the rotated token.
+let refreshPromise: Promise<string> | null = null
+
+export function getAuthHeader(): string | null {
+  const token = useGameStore.getState().accessToken
+  return token ? `Bearer ${token}` : null
+}
+
+// Calls POST /auth/refresh with the persisted refresh token, persists the
+// rotated tokens on success, and clears the session on failure. Concurrent
+// callers share a single in-flight request.
+export async function refreshTokens(): Promise<string> {
+  if (refreshPromise) return refreshPromise
+  const rt = useGameStore.getState().refreshToken
+  if (!rt) {
+    throw new ApiError(401, 'Not authenticated')
+  }
+  refreshPromise = (async () => {
+    try {
+      const tokens = await apiFetch<AuthTokenDto>('/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: rt } satisfies RefreshAuthDto),
+      })
+      useGameStore.getState().setSession(tokens)
+      return tokens.accessToken
+    } catch (err) {
+      const hadSession = useGameStore.getState().accessToken != null
+      useGameStore.getState().clearSession()
+      if (hadSession) {
+        // Surface a translated message so the user understands why they were
+        // bounced to the login screen.
+        toast(getMessages().auth.sessionExpired, 'error')
+      }
+      throw err
+    } finally {
+      refreshPromise = null
+    }
+  })()
+  return refreshPromise
+}
+
+// Authenticated wrapper around `apiFetch`. Adds an Authorization header,
+// transparently retries once on 401 after refreshing the token, and forwards
+// any other error untouched.
+export async function apiFetchAuthed<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const accessToken = useGameStore.getState().accessToken
+  // Bootstrap-time race: an in-flight refresh may already be writing tokens.
+  // Wait for it before deciding.
+  const token =
+    accessToken ?? (refreshPromise ? await refreshPromise : null)
+  if (!token) {
+    throw new ApiError(401, 'Not authenticated')
+  }
+
+  const headers = new Headers(init.headers)
+  headers.set('Authorization', `Bearer ${token}`)
+
+  try {
+    return await apiFetch<T>(path, { ...init, headers })
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      try {
+        const newToken = await refreshTokens()
+        const retryHeaders = new Headers(init.headers)
+        retryHeaders.set('Authorization', `Bearer ${newToken}`)
+        return await apiFetch<T>(path, { ...init, headers: retryHeaders })
+      } catch {
+        // Re-throw the original 401 so callers see a consistent error shape.
+        throw err
+      }
+    }
+    throw err
+  }
 }

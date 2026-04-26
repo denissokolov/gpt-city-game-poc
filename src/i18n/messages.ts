@@ -14,6 +14,24 @@ export type Messages = {
     send: string;
     somethingWentWrong: string;
   };
+  auth: {
+    signOut: string;
+    signedInAs: string;
+    sessionExpired: string;
+  };
+  login: {
+    title: string;
+    subtitle: string;
+    error: string;
+    missingClientId: string;
+  };
+  avatars: {
+    pickerTitle: string;
+    pickerSubtitle: string;
+    create: string;
+    empty: string;
+    loadFailed: string;
+  };
   sex: Record<PlayerSex, string>;
   onboarding: {
     welcomeTo: string;
@@ -45,6 +63,7 @@ export type Messages = {
     playingAs: string;
     heading: string;
     description: string;
+    emptyHint: string;
   };
   location: {
     label: string;
@@ -139,6 +158,25 @@ const en: Messages = {
     send: "Send",
     somethingWentWrong: "Something went wrong",
   },
+  auth: {
+    signOut: "Sign out",
+    signedInAs: "Signed in as",
+    sessionExpired: "Your session expired. Please sign in again.",
+  },
+  login: {
+    title: "GPT City",
+    subtitle: "Sign in with Google to enter the city.",
+    error: "Sign-in failed. Please try again.",
+    missingClientId:
+      "Google sign-in is not configured. Set VITE_GOOGLE_CLIENT_ID and reload.",
+  },
+  avatars: {
+    pickerTitle: "Pick an avatar",
+    pickerSubtitle: "Continue with one of your avatars or create a new one.",
+    create: "Create new avatar",
+    empty: "You don't have any avatars yet.",
+    loadFailed: "Couldn't load your avatars",
+  },
   sex: {
     male: "Male",
     female: "Female",
@@ -177,6 +215,8 @@ const en: Messages = {
     heading: "GPT City",
     description:
       "Click your current location to explore it, or click a neighbor to walk over.",
+    emptyHint:
+      "The map is empty. Tap the round Game Assistant button at the bottom-right (sparkles icon), describe what to add, and it can create locations and people for you. When locations appear here, open one and tap a character to chat.",
   },
   location: {
     label: "Location",
@@ -313,6 +353,25 @@ const ru: Messages = {
     send: "Отправить",
     somethingWentWrong: "Что-то пошло не так",
   },
+  auth: {
+    signOut: "Выйти",
+    signedInAs: "Вы вошли как",
+    sessionExpired: "Сессия истекла. Войдите снова.",
+  },
+  login: {
+    title: "GPT City",
+    subtitle: "Войдите через Google, чтобы попасть в город.",
+    error: "Не удалось войти. Попробуйте ещё раз.",
+    missingClientId:
+      "Вход через Google не настроен. Укажите VITE_GOOGLE_CLIENT_ID и перезагрузите страницу.",
+  },
+  avatars: {
+    pickerTitle: "Выберите аватар",
+    pickerSubtitle: "Продолжайте с одним из аватаров или создайте нового.",
+    create: "Создать нового аватара",
+    empty: "У вас пока нет аватаров.",
+    loadFailed: "Не удалось загрузить аватаров",
+  },
   sex: {
     male: "Мужской",
     female: "Женский",
@@ -351,6 +410,8 @@ const ru: Messages = {
     heading: "GPT City",
     description:
       "Нажмите на свою локацию, чтобы исследовать её, или на соседнюю — чтобы дойти пешком.",
+    emptyHint:
+      "Карта пуста. Нажмите круглую кнопку игрового ассистента внизу справа (иконка искр) и опишите, что добавить — он может создать локации и персонажей. Когда локации появятся на карте, откройте одну и нажмите на персонажа, чтобы написать в чат.",
   },
   location: {
     label: "Локация",
