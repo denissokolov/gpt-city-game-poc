@@ -80,13 +80,13 @@ export default function MapScreen() {
           />
           <div className="min-w-0">
             <p className="text-xs text-city-muted">{t.map.playingAs}</p>
-            <p className="font-display font-semibold truncate">
+            <span className="block font-display font-semibold truncate">
               {player ? (
                 `${player.firstName} ${player.lastName}`
               ) : (
                 <Skeleton className="h-4 w-32" />
               )}
-            </p>
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
